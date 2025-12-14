@@ -1,4 +1,1 @@
-# E_Commerce_Backend_SpringBoot_RestAPI
-# E_Commerce_Backend_SpringBoot_RestAPI
-# E_Commerce_Backend_SpringBoot_RestAPI
-# E_Commerce_Backend_SpringBoot_RestAPI
+This project is a backend REST API for an e-commerce application developed using Spring Boot. It is designed to handle core e-commerce functionalities such as user management, product and category management, shopping cart operations, and order processing. The application follows a clean and modular architecture, making the codebase easy to understand, maintain, and extend. The backend is built using Spring Boot, Spring Data JPA, and Hibernate for database interactions, with MySQL used as the primary database. RESTful APIs are exposed for seamless communication with frontend applications, enabling smooth integration with web or mobile clients. Standard HTTP methods and status codes are used to ensure proper API behavior. The project emphasizes best practices such as layered architecture, DTO-based request and response handling, exception handling, and validation. It also supports basic authentication and authorization concepts, making it suitable as a foundation for real-world applications.
