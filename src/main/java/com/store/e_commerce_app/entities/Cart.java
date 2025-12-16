@@ -21,6 +21,17 @@ public class Cart {
     @Transient
     private Double totalPrice;
 
+    @Transient
+    private Double totalOrderPrice;
+
+    public Double getTotalOrderPrice() {
+        return totalOrderPrice;
+    }
+
+    public void setTotalOrderPrice(Double totalOrderPrice) {
+        this.totalOrderPrice = totalOrderPrice;
+    }
+
     public Long getId() {
         return id;
     }
@@ -65,11 +76,12 @@ public class Cart {
 
     }
 
-    public Cart(Long id, UserDlts userDlts, Product product, Integer quantity, Double totalPrice) {
+    public Cart(Long id, UserDlts userDlts, Product product, Integer quantity, Double totalPrice, Double totalOrderPrice) {
         this.id = id;
         this.userDlts = userDlts;
         this.product = product;
         this.quantity = quantity;
         this.totalPrice = totalPrice;
+        this.totalOrderPrice = totalOrderPrice;
     }
 }

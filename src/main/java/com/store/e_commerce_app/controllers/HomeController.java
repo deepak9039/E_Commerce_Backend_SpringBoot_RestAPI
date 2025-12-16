@@ -1,6 +1,7 @@
 package com.store.e_commerce_app.controllers;
 
 import com.store.e_commerce_app.dto.AddToCartRequest;
+import com.store.e_commerce_app.dto.UpdateCartQuantityRequest;
 import com.store.e_commerce_app.entities.Cart;
 import com.store.e_commerce_app.entities.UserDlts;
 import com.store.e_commerce_app.service.CartService;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -60,7 +62,17 @@ public class HomeController {
     public ResponseEntity<?> getCartByUser(@RequestBody UserDlts userDlts, HttpSession session){
 
         List<Cart> carts = cartService.getCartByUser(userDlts.getUserId());
-        return ResponseEntity.ok(carts);
+        Double totalOrderPrice = 0.0;
+        List<Cart> updatedCart = new ArrayList<>();
+        for (Cart cart : carts) {
+            Double totalPrice = (cart.getProduct().getProductPrice() * cart.getQuantity());
+            cart.setTotalPrice(totalPrice);
+            totalOrderPrice = totalOrderPrice + totalPrice;
+            cart.setTotalOrderPrice(totalOrderPrice);
+            updatedCart.add(cart);
+        };
+
+        return ResponseEntity.ok(updatedCart);
     }
 
     @PostMapping("cartCount")
@@ -69,4 +81,23 @@ public class HomeController {
         return ResponseEntity.ok(cartCount);
     }
 
+    @PostMapping("updateCartQuantityPlus")
+    public ResponseEntity<?> updateCartQuantityPlus(@RequestBody UpdateCartQuantityRequest request, HttpSession session){
+        List<Cart> existingCart = cartService.getCartByUser(request.getId());
+        if (existingCart == null) {
+            return ResponseEntity.badRequest().body("Cart item not found");
+        }
+        Cart updatedCart = cartService.updateQuantityInc(request.getId());
+        return ResponseEntity.ok(updatedCart);
+    }
+
+    @PostMapping("updateCartQuantityMinus")
+    public ResponseEntity<?> updateCartQuantityMinus(@RequestBody UpdateCartQuantityRequest request, HttpSession session) {
+        List<Cart> existingCart = cartService.getCartByUser(request.getId());
+        if (existingCart == null) {
+            return ResponseEntity.badRequest().body("Cart item not found");
+        }
+        Cart updatedCart = cartService.updateQuantityDec(request.getId());
+        return ResponseEntity.ok(updatedCart);
+    }
 }

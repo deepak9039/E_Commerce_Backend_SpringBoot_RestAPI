@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class CartService {
@@ -60,6 +61,31 @@ public class CartService {
     public Integer getCartCountByUser(Long userId) {
         return cartRepository.countByUserDltsUserId(userId);
     }
+
+    public Cart updateQuantityInc(Long cartId) {
+
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new RuntimeException("Cart item not found"));
+        int newQuantity = cart.getQuantity() + 1;
+
+        cart.setQuantity(newQuantity);
+        cart.setTotalPrice(newQuantity * cart.getProduct().getProductPrice());
+
+        return cartRepository.save(cart);
+    }
+
+    public Cart updateQuantityDec(Long cartId) {
+
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new RuntimeException("Cart item not found"));
+        int newQuantity = cart.getQuantity() -1;
+
+        cart.setQuantity(newQuantity);
+        cart.setTotalPrice(newQuantity * cart.getProduct().getProductPrice());
+
+        return cartRepository.save(cart);
+    }
+
 
 }
 
