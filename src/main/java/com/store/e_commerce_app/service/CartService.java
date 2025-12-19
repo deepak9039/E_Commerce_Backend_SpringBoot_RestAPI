@@ -1,5 +1,6 @@
 package com.store.e_commerce_app.service;
 
+import com.store.e_commerce_app.dto.UpdateCartQuantityRequest;
 import com.store.e_commerce_app.entities.Cart;
 import com.store.e_commerce_app.entities.Product;
 import com.store.e_commerce_app.entities.UserDlts;
@@ -62,10 +63,17 @@ public class CartService {
         return cartRepository.countByUserDltsUserId(userId);
     }
 
-    public Cart updateQuantityInc(Long cartId) {
+    public Cart updateQuantityInc(UpdateCartQuantityRequest request) {
 
-        Cart cart = cartRepository.findById(cartId)
-                .orElseThrow(() -> new RuntimeException("Cart item not found"));
+//        Cart cart = cartRepository.findById(cartId)
+        Cart cart = cartRepository.findByIdAndUserDltsUserIdAndProductProductId(
+                request.getId(),
+                request.getUserId(),
+                request.getProductId()
+                );
+        if (cart == null) {
+            throw new RuntimeException("Cart item not found");
+        }
         int newQuantity = cart.getQuantity() + 1;
 
         cart.setQuantity(newQuantity);
@@ -74,10 +82,16 @@ public class CartService {
         return cartRepository.save(cart);
     }
 
-    public Cart updateQuantityDec(Long cartId) {
+    public Cart updateQuantityDec(UpdateCartQuantityRequest request) {
 
-        Cart cart = cartRepository.findById(cartId)
-                .orElseThrow(() -> new RuntimeException("Cart item not found"));
+        Cart cart = cartRepository.findByIdAndUserDltsUserIdAndProductProductId(
+                request.getId(),
+                request.getUserId(),
+                request.getProductId()
+                );
+        if (cart == null) {
+            throw new RuntimeException("Cart item not found");
+        }
         int newQuantity = cart.getQuantity() -1;
 
         cart.setQuantity(newQuantity);
@@ -86,6 +100,19 @@ public class CartService {
         return cartRepository.save(cart);
     }
 
+    public Cart removeFromCart(UpdateCartQuantityRequest request) {
+        Cart cart = cartRepository.findByIdAndUserDltsUserIdAndProductProductId(
+                request.getId(),
+                request.getUserId(),
+                request.getProductId()
+                );
+
+        if (cart == null) {
+            throw new RuntimeException("Cart item not found");
+        }
+        cartRepository.delete(cart);
+        return cart;
+    }
 
 }
 

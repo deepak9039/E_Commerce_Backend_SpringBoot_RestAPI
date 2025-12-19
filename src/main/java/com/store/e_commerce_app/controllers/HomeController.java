@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 //@RequestMapping("user")
@@ -87,7 +88,7 @@ public class HomeController {
         if (existingCart == null) {
             return ResponseEntity.badRequest().body("Cart item not found");
         }
-        Cart updatedCart = cartService.updateQuantityInc(request.getId());
+        Cart updatedCart = cartService.updateQuantityInc(request);
         return ResponseEntity.ok(updatedCart);
     }
 
@@ -97,7 +98,17 @@ public class HomeController {
         if (existingCart == null) {
             return ResponseEntity.badRequest().body("Cart item not found");
         }
-        Cart updatedCart = cartService.updateQuantityDec(request.getId());
+        Cart updatedCart = cartService.updateQuantityDec(request);
         return ResponseEntity.ok(updatedCart);
     }
+
+    @PostMapping("removeFromCart")
+    public ResponseEntity<?> removeFromCart(@RequestBody UpdateCartQuantityRequest request, HttpSession session) {
+        cartService.removeFromCart(request);
+        return ResponseEntity.ok(Map.of(
+                "status", "Success",
+                "message", "Cart Item removed successfully"));
+    }
+
+
 }
