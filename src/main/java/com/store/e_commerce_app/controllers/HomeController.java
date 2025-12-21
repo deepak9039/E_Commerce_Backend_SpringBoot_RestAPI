@@ -1,10 +1,15 @@
 package com.store.e_commerce_app.controllers;
 
 import com.store.e_commerce_app.dto.AddToCartRequest;
+import com.store.e_commerce_app.dto.OrderRequest;
 import com.store.e_commerce_app.dto.UpdateCartQuantityRequest;
+import com.store.e_commerce_app.entities.Address;
 import com.store.e_commerce_app.entities.Cart;
+import com.store.e_commerce_app.entities.ProductOrder;
 import com.store.e_commerce_app.entities.UserDlts;
+import com.store.e_commerce_app.service.AddressService;
 import com.store.e_commerce_app.service.CartService;
+import com.store.e_commerce_app.service.ProductOrderService;
 import com.store.e_commerce_app.service.UserDltsService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +29,12 @@ public class HomeController {
 
     @Autowired
     private CartService cartService;
+
+    @Autowired
+    private ProductOrderService productOrderService;
+
+    @Autowired
+    private AddressService addressService;
 
     @PostMapping("createUser")
     public String createUser(@RequestBody UserDlts userDlts, HttpSession session){
@@ -109,6 +120,32 @@ public class HomeController {
                 "status", "Success",
                 "message", "Cart Item removed successfully"));
     }
+
+    @PostMapping("saveOrder")
+    public ResponseEntity<?> saveOrder(@RequestBody OrderRequest request, HttpSession session){
+        String orderMessage = productOrderService.saveOrder(request);
+        return ResponseEntity.ok(Map.of(
+                "status", "Success",
+                "message", orderMessage
+        ));
+
+    }
+
+    @PostMapping("getOrdersByUserId")
+    public ResponseEntity<?> getOrdersByUserId(@RequestBody OrderRequest request, HttpSession session) {
+        List<ProductOrder> orders = productOrderService.getOrdersByUserId(request);
+        return ResponseEntity.ok(orders);
+    }
+
+    @PostMapping("userAddress")
+    public ResponseEntity<?> getUserAddress(@RequestBody UserDlts userDlts, HttpSession session){
+        List<Address> addresses = addressService.findByUserAddresses(userDlts.getUserId());
+        return ResponseEntity.ok(Map.of(
+                "status", "Success",
+                "addresses", addresses
+        ));
+    }
+
 
 
 }
