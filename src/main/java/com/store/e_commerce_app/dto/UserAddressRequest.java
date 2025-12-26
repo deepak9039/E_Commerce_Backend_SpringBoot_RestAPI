@@ -1,44 +1,24 @@
-package com.store.e_commerce_app.entities;
+package com.store.e_commerce_app.dto;
 
-import jakarta.persistence.*;
-import com.fasterxml.jackson.annotation.JsonBackReference;
+public class UserAddressRequest {
 
-@Entity
-@Table(name = "Address")
-public class Address {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "addressId")
+    private Long userId;
     private Long addressId;
-
-    @Column(name = "addressLine")
     private String addressLine;
-
-    @Column(name = "city")
     private String city;
-
-    @Column(name = "state")
     private String state;
-
-    @Column(name = "address")
     private String address;
-
-    @Column(name = "pinCode")
     private String pinCode;
-
-    @Column(name = "country")
     private String country;
-
-    @Column(name = "phoneNumber")
     private String phoneNumber;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    @JsonBackReference
-    private UserDlts userDlts;
+    public Long getUserId() {
+        return userId;
+    }
 
-    // Getters & Setters
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
 
     public Long getAddressId() {
         return addressId;
@@ -102,33 +82,5 @@ public class Address {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
-    }
-
-    public UserDlts getUserDlts() {
-        return userDlts;
-    }
-
-    public void setUserDlts(UserDlts userDlts) {
-        this.userDlts = userDlts;
-    }
-
-    // Default Constractor
-    public Address() {
-    }
-
-    public Address(UserDlts userDlts){
-        this.userDlts = userDlts;
-    }
-
-    public Address(Long addressId, String addressLine, String city, String state,String address, String pinCode, String country, String phoneNumber, UserDlts userDlts) {
-        this.addressId = addressId;
-        this.addressLine = addressLine;
-        this.city = city;
-        this.state = state;
-        this.address = address;
-        this.pinCode = pinCode;
-        this.country = country;
-        this.phoneNumber = phoneNumber;
-        this.userDlts = userDlts;
     }
 }

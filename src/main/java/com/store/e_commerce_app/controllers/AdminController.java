@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Objects;
+import java.util.Map;
 import org.springframework.http.MediaType;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,30 +32,31 @@ public class AdminController {
     @Autowired
     private ProductService  productService;
 
-    // upload dir injected from application.properties (default category_img)
-    @Value("${app.upload.dir:category_img}")
+    // upload dir injected from application.properties (default to resources/static/category_img)
+    @Value("${app.upload.dir:src/main/resources/static/category_img}")
     private String uploadDir;
 
-    @Value("${app.upload.product:static/image/product}")
+    @Value("${app.upload.product:src/main/resources/static/product_img}")
     private String uploadProductDir;
 
     // Category Urls
     // Accept multipart/form-data: a JSON part named "category" and optional file part named "image"
     @PostMapping(value = "/admin/createCategory", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public String category(
+    public ResponseEntity<?> category(
             @RequestPart("category") Category category,
             @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
 
-        // Ensure upload directory exists
+        // Ensure upload directory exists under project resources/static
         Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
         Files.createDirectories(uploadPath);
 
-        // If an image file is provided, save it and set categoryImage to saved filename
+        // If an image file is provided, save it and set categoryImage to saved filename (only filename)
         if (image != null && !image.isEmpty()) {
             String original = StringUtils.cleanPath(image.getOriginalFilename());
             String filename = System.currentTimeMillis() + "_" + original;
             Path target = uploadPath.resolve(filename);
             Files.copy(image.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
+            // store only filename in DB
             category.setCategoryImage(filename);
         } else {
             // fallback: if client sent image filename inside JSON, use it; otherwise default
@@ -65,15 +67,16 @@ public class AdminController {
 
         Boolean exists = categoryService.existsByCategoryName(category.getCategoryName());
         if (exists) {
-            return "Category name already exists";
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Category name already exists");
         }
 
         Category savedCategory = categoryService.createCategory(category);
         if (Objects.isNull(savedCategory)) {
-            return "Something went wrong!";
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Something went wrong!");
         }
 
-        return "Category Successfully Saved !!";
+        // Return success message + saved entity
+        return ResponseEntity.ok(Map.of("message", "Category created successfully", "category", savedCategory));
     }
 
     @PostMapping("getCategoryById")
@@ -86,14 +89,14 @@ public class AdminController {
     }
 
     @PostMapping(value = "/admin/updateCategory", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public String updateCategory(
+    public ResponseEntity<?> updateCategory(
             @RequestPart("category") Category category,
             @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
 
         // Fetch existing category
         Category existing = categoryService.findByCategoryId(category.getCategoryId());
         if (existing == null) {
-            return "No Category Found With This Category Id.";
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No Category Found With This Category Id.");
         }
 
         // Ensure upload directory exists
@@ -124,9 +127,10 @@ public class AdminController {
         category.setCategoryId(existing.getCategoryId());
         category.setCategoryId(existing.getCategoryId());
 
-        categoryService.updateCategory(category);
+        Category updated = categoryService.updateCategory(category);
 
-        return "Category Successfully Updated !!";
+        // Return success message + updated entity
+        return ResponseEntity.ok(Map.of("message", "Category updated successfully", "category", updated));
     }
 
 
@@ -149,11 +153,11 @@ public class AdminController {
 //        return "Product Successfully Saved !!";
 //    }
     @PostMapping(value = "/admin/createProduct", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public String createProduct(
+    public ResponseEntity<?> createProduct(
             @RequestPart("product") Product product,
             @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
 
-        // Create product upload directory: static/image/product
+        // Create product upload directory under resources/static/product_img
         Path uploadPath = Paths.get(uploadProductDir).toAbsolutePath().normalize();
         Files.createDirectories(uploadPath);
 
@@ -162,6 +166,7 @@ public class AdminController {
             String filename = System.currentTimeMillis() + "_" + original;
             Path target = uploadPath.resolve(filename);
             Files.copy(image.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
+            // store only filename in DB
             product.setProductImageUrl(filename);
         } else {
             String imageUrl = (product.getProductImageUrl() != null && !product.getProductImageUrl().isBlank())
@@ -171,15 +176,16 @@ public class AdminController {
 
         Boolean exists = productService.existsByProductName(product.getProductName());
         if (exists) {
-            return "Product name already exists!";
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Product name already exists!");
         }
 
         Product savedProduct = productService.createproduct(product);
         if (Objects.isNull(savedProduct)) {
-            return "Something went wrong!";
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Something went wrong!");
         }
 
-        return "Product Successfully Saved !!";
+        // Return success message + saved product
+        return ResponseEntity.ok(Map.of("message", "Product created successfully", "product", savedProduct));
     }
 
     @GetMapping("/findAllProducts")
@@ -213,14 +219,14 @@ public class AdminController {
 //    }
 
     @PostMapping(value = "/admin/updateProduct", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public String updateProduct(
+    public ResponseEntity<?> updateProduct(
             @RequestPart("product") Product product,
             @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
 
         // Fetch existing product
         Product existing = productService.findByProductId(product.getProductId());
         if (existing == null) {
-            return "No Product Found With This Product Id.";
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No Product Found With This Product Id.");
         }
 
         // Create upload directory
@@ -252,10 +258,19 @@ public class AdminController {
 //        product.setCreatedAt(existing.getCreatedAt());  // if you track timestamps
         product.setProductId(existing.getProductId());
 
-        productService.updateProduct(product);
+        Product updated = productService.updateProduct(product);
 
-        return "Product Successfully Updated !!";
+        // Return success message + updated product
+        return ResponseEntity.ok(Map.of("message", "Product updated successfully", "product", updated));
     }
 
+    @PostMapping("findProductsByCategoryName" )
+    public ResponseEntity<?> findProductsByCategoryName(@RequestBody Category category, HttpSession session) {
+        List<Product> products = productService.findProductsByCategoryName(category.getCategoryName());
+        return ResponseEntity.ok(Map.of(
+                "message", "Success",
+                "products", products
+        ));
+    }
 
 }

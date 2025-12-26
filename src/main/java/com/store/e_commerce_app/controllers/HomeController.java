@@ -3,6 +3,7 @@ package com.store.e_commerce_app.controllers;
 import com.store.e_commerce_app.dto.AddToCartRequest;
 import com.store.e_commerce_app.dto.OrderRequest;
 import com.store.e_commerce_app.dto.UpdateCartQuantityRequest;
+import com.store.e_commerce_app.dto.UserAddressRequest;
 import com.store.e_commerce_app.entities.Address;
 import com.store.e_commerce_app.entities.Cart;
 import com.store.e_commerce_app.entities.ProductOrder;
@@ -51,17 +52,37 @@ public class HomeController {
         return "User Details Saved Succesfully";
     }
 
-    @GetMapping("findAllUsers")
-    public List<UserDlts> getAllUsers(){
-        return userDltsService.getAllUsers();
-    }
-
     @PostMapping("getUser")
     public Object getUser(@RequestBody UserDlts userDlts, HttpSession session){
         UserDlts userDetailRes = userDltsService.findByUserId(userDlts.getUserId());
         return userDetailRes;
     }
 
+    @PostMapping("createUserAddress")
+    public ResponseEntity<?> createUserAddress(@RequestBody UserAddressRequest request){
+
+        Address savedAddress = addressService.saveUserAddress(request);
+        return ResponseEntity.ok(Map.of(
+                "status", "SUCCESS",
+                "message", "Address saved successfully",
+                "addressId", savedAddress.getAddressId()
+        ));
+
+    }
+
+    @PostMapping("userAddress")
+    public ResponseEntity<?> getUserAddress(@RequestBody UserDlts userDlts, HttpSession session){
+        List<Address> addresses = addressService.findByUserAddresses(userDlts.getUserId());
+        return ResponseEntity.ok(Map.of(
+                "status", "Success",
+                "addresses", addresses
+        ));
+    }
+
+    @GetMapping("findAllUsers")
+    public List<UserDlts> getAllUsers(){
+        return userDltsService.getAllUsers();
+    }
 
     @PostMapping("addToCart")
     public ResponseEntity<?> addToCart(@RequestBody AddToCartRequest request, HttpSession session){
@@ -135,15 +156,6 @@ public class HomeController {
     public ResponseEntity<?> getOrdersByUserId(@RequestBody OrderRequest request, HttpSession session) {
         List<ProductOrder> orders = productOrderService.getOrdersByUserId(request);
         return ResponseEntity.ok(orders);
-    }
-
-    @PostMapping("userAddress")
-    public ResponseEntity<?> getUserAddress(@RequestBody UserDlts userDlts, HttpSession session){
-        List<Address> addresses = addressService.findByUserAddresses(userDlts.getUserId());
-        return ResponseEntity.ok(Map.of(
-                "status", "Success",
-                "addresses", addresses
-        ));
     }
 
 

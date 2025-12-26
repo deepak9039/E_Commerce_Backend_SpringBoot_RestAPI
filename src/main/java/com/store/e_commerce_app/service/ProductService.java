@@ -38,4 +38,9 @@ public class ProductService {
         return productRepository.existsByProductName(productName);
     }
 
+    public List<Product> findProductsByCategoryName(String categoryName){
+        return productRepository.findBycategoryName(categoryName);
+    }
+
+
 }

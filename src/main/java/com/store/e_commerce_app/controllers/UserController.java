@@ -28,67 +28,6 @@ public class UserController {
         return "Welcome to the E-Commerce Application!";
     }
 
-//    @PostMapping("/signin")
-//    public UserDlts login(@RequestBody UserDlts userDlts, HttpSession session) {
-//        UserDlts existingUser = userDltsService.findByUserEmail(userDlts.getEmail());
-//        if (existingUser != null && existingUser.getPassword().equals(userDlts.getPassword())) {
-//            return existingUser;
-//        } else {
-//            return null; // or throw an exception for invalid credentials
-//        }
-//    }
-
-//    @Autowired
-//    private AuthenticationManager authManager;
-//
-//    @PostMapping("/signin")
-//    public ResponseEntity<?> login(@RequestBody UserDlts userDlts) {
-//
-//        Authentication authentication = authManager.authenticate(
-//                new UsernamePasswordAuthenticationToken(
-//                        userDlts.getEmail(), userDlts.getPassword()
-//                )
-//        );
-//
-//        SecurityContextHolder.getContext().setAuthentication(authentication);
-//
-//        return ResponseEntity.ok("LOGIN_SUCCESS");
-//    }
-
-//    @PostMapping("/signin")
-//    public ResponseEntity<?> login(@RequestBody UserDlts userDlts) {
-//
-//        Authentication authentication = authManager.authenticate(
-//                new UsernamePasswordAuthenticationToken(
-//                        userDlts.getEmail(), userDlts.getPassword()
-//                )
-//        );
-//
-//        SecurityContextHolder.getContext().setAuthentication(authentication);
-//
-//        return ResponseEntity.ok("LOGIN_SUCCESS");
-//    }
-//@PostMapping("/signin")
-//public ResponseEntity<?> login(@RequestBody UserDlts userDlts) {
-//
-//    Authentication authentication = authManager.authenticate(
-//            new UsernamePasswordAuthenticationToken(
-//                    userDlts.getEmail(),
-//                    userDlts.getPassword()
-//            )
-//    );
-//
-//    CustomUser user = (CustomUser) authentication.getPrincipal();
-//
-//    return ResponseEntity.ok(
-//            Map.of(
-//                    "status", "SUCCESS",
-//                    "email", user.getUsername(),
-//                    "role", user.getAuthorities().iterator().next().getAuthority()
-//            )
-//    );
-//}
-
     @PostMapping("/signin")
     public ResponseEntity<?> login(@RequestBody UserDlts userDlts, HttpSession session) {
 
