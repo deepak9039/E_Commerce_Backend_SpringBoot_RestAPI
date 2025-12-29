@@ -36,21 +36,3 @@ public class WebConfig implements WebMvcConfigurer {
                 .setCachePeriod(3600);
     }
 }
-
-
-//@Configuration
-//public class WebConfig implements WebMvcConfigurer {
-//
-//    @Value("${app.upload.dir:static/image/category}")
-//    private String uploadDir;
-//
-//    @Override
-//    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-//        Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
-//        String externalPath = uploadPath.toUri().toString();
-//        // Map /uploads/** to the filesystem upload directory
-//        registry.addResourceHandler("/uploads/**")
-//                .addResourceLocations(externalPath)
-//                .setCachePeriod(3600);
-//    }
-//}

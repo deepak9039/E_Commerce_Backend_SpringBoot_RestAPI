@@ -141,17 +141,6 @@ public class AdminController {
 
 
     //Product Urls
-//    @PostMapping("createProduct")
-//    public String createProduct(@RequestBody Product product, HttpSession session) {
-//
-//        Category existCategory = categoryService.findByCategoryName(product.getCategoryName());
-//
-//        if (existCategory == null) {
-//            return "Provided Category Name Is Invalid : categoryName!";
-//        }
-//        productService.createproduct(product);
-//        return "Product Successfully Saved !!";
-//    }
     @PostMapping(value = "/admin/createProduct", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createProduct(
             @RequestPart("product") Product product,
@@ -206,17 +195,6 @@ public class AdminController {
 
         return ResponseEntity.ok(result);
     }
-
-
-//    @PostMapping("updateProduct")
-//    public String updateProduct(@RequestBody Product product, HttpSession session) {
-//        Product getProductById = productService.findByProductId(product.getProductId());
-//        if (getProductById == null) {
-//            return "No Product Fount With This Product Id.";
-//        }
-//        productService.updateProduct(product);
-//        return "Product Successfully Updated !!";
-//    }
 
     @PostMapping(value = "/admin/updateProduct", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateProduct(
