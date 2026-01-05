@@ -1,9 +1,6 @@
 package com.store.e_commerce_app.controllers;
 
-import com.store.e_commerce_app.dto.AddToCartRequest;
-import com.store.e_commerce_app.dto.OrderRequest;
-import com.store.e_commerce_app.dto.UpdateCartQuantityRequest;
-import com.store.e_commerce_app.dto.UserAddressRequest;
+import com.store.e_commerce_app.dto.*;
 import com.store.e_commerce_app.entities.Address;
 import com.store.e_commerce_app.entities.Cart;
 import com.store.e_commerce_app.entities.ProductOrder;
@@ -158,6 +155,31 @@ public class HomeController {
         return ResponseEntity.ok(orders);
     }
 
+    @PostMapping("/admin/getAllOrders")
+    public ResponseEntity<?> getAllOrders(HttpSession session) {
+        List<ProductOrder> orders = productOrderService.getAllOrders();
+        return ResponseEntity.ok(Map.of(
+                "status", "Success",
+                "orders", orders
+        ));
+    }
 
+    @PostMapping("/admin/updateOrderStatus")
+    public ResponseEntity<?> updateOrderStatus(@RequestBody UpdateOrderStatus request, HttpSession session){
+        try {
+            ProductOrder productOrder = productOrderService.updateOrderStatus(request);
+            return ResponseEntity.ok(Map.of(
+                    "status", "Success",
+                    "order", productOrder
+            ));
+        } catch (IllegalArgumentException ex) {
+            // validation error from service
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "Failure",
+                    "message", ex.getMessage(),
+                    "allowedStatuses", productOrderService.getAllowedStatuses()
+            ));
+        }
+    }
 
 }

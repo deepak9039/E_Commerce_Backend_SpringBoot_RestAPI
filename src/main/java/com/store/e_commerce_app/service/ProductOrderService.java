@@ -1,15 +1,18 @@
 package com.store.e_commerce_app.service;
 
 import com.store.e_commerce_app.dto.OrderRequest;
+import com.store.e_commerce_app.dto.UpdateOrderStatus;
 import com.store.e_commerce_app.entities.Cart;
 import com.store.e_commerce_app.entities.OrderAddress;
 import com.store.e_commerce_app.entities.ProductOrder;
+import com.store.e_commerce_app.exception.InvalidOrderStatusException;
 import com.store.e_commerce_app.repositories.CartRepositort;
 import com.store.e_commerce_app.repositories.ProductOrderRepository;
 import com.store.e_commerce_app.util.OrderStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -66,7 +69,6 @@ public class ProductOrderService {
         }
 
 
-
         return "Order saved successfully";
     }
 
@@ -76,6 +78,41 @@ public class ProductOrderService {
             throw new IllegalArgumentException("User ID cannot be null");
         }
         return productOrderRepository.findByUserDltsUserId(orderRequest.getUserId());
+    }
+
+    public List<ProductOrder> getAllOrders() {
+        return productOrderRepository.findAll();
+    }
+
+    public ProductOrder updateOrderStatus(UpdateOrderStatus updateOrderStatus) {
+        // Validate status inside service and throw custom exception on invalid
+        String status = updateOrderStatus.getStatus();
+        if (status == null || status.isBlank()) {
+            throw new InvalidOrderStatusException("Order status is required. Allowed: " + String.join(",", getAllowedStatuses()));
+        }
+
+        try {
+            OrderStatus.valueOf(status);
+        } catch (IllegalArgumentException ex) {
+            throw new InvalidOrderStatusException("Invalid order status: " + status + ". Allowed: " + String.join(",", getAllowedStatuses()));
+        }
+
+        ProductOrder productOrder = productOrderRepository.findByOrderId(updateOrderStatus.getOrderId());
+        String orderId = updateOrderStatus.getOrderId();
+        if(productOrder == null) {
+            throw new RuntimeException("Order not found with ID: " + orderId);
+        }
+        productOrder.setStatus(status);
+        return productOrderRepository.save(productOrder);
+    }
+
+    // helper to return enum names for controller or other callers
+    public List<String> getAllowedStatuses() {
+        List<String> allowed = new ArrayList<>();
+        for (OrderStatus s : OrderStatus.values()) {
+            allowed.add(s.name());
+        }
+        return allowed;
     }
 
 }

@@ -10,4 +10,6 @@ public interface ProductOrderRepository extends JpaRepository<ProductOrder, Long
 
     public List<ProductOrder> findByUserDltsUserId(Long userId);
 
+    public ProductOrder findByOrderId(String orderId);
+
 }
