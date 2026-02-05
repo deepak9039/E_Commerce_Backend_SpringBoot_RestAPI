@@ -49,4 +49,21 @@ public class AddressService {
         return addressRepository.save(address);
     }
 
+    public Address updateUserAddress(UserAddressRequest request){
+        Address existingAddress = addressRepository.findByAddressId(request.getAddressId());
+        if(existingAddress == null || !existingAddress.getUserDlts().getUserId().equals(request.getUserId())){
+            throw new RuntimeException("Invalid Address Id or User Id");
+        }
+
+        existingAddress.setAddressLine(request.getAddressLine());
+        existingAddress.setCity(request.getCity());
+        existingAddress.setState(request.getState());
+        existingAddress.setAddress(request.getAddress());
+        existingAddress.setPinCode(request.getPinCode());
+        existingAddress.setCountry(request.getCountry());
+        existingAddress.setPhoneNumber(request.getPhoneNumber());
+
+        return addressRepository.save(existingAddress);
+    }
+
 }

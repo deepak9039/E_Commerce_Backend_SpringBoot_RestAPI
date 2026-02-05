@@ -37,11 +37,11 @@ public class HomeController {
     @PostMapping("createUser")
     public String createUser(@RequestBody UserDlts userDlts, HttpSession session){
 
-        UserDlts existingUserDlts = userDltsService.findByUserName(userDlts.getUserName());
+//        UserDlts existingUserDlts = userDltsService.findByUserName(userDlts.getUserName());
         UserDlts existingEmailDetails = userDltsService.findByUserEmail(userDlts.getEmail());
-        if(existingUserDlts != null){
-            return "Username already exists";
-        }
+//        if(existingUserDlts != null){
+//            return "Username already exists";
+//        }
         if (existingEmailDetails != null) {
             return "Email already exists";
         }
@@ -55,6 +55,22 @@ public class HomeController {
         return userDetailRes;
     }
 
+    @PostMapping("updateUser")
+    public ResponseEntity<?> updateUser(@RequestBody UserDlts userDlts, HttpSession session){
+        UserDlts updatedUserDetail = userDltsService.updateUserDetails(userDlts);
+        if(updatedUserDetail == null){
+            return ResponseEntity.ok(Map.of(
+                    "status", "FAILURE",
+                    "message", "Failed to update user details"
+            ));
+        }
+        return ResponseEntity.ok(Map.of(
+                "status", "SUCCESS",
+                "message", "User details updated successfully",
+                "user", updatedUserDetail
+        ));
+    }
+
     @PostMapping("createUserAddress")
     public ResponseEntity<?> createUserAddress(@RequestBody UserAddressRequest request){
 
@@ -65,6 +81,16 @@ public class HomeController {
                 "addressId", savedAddress.getAddressId()
         ));
 
+    }
+
+    @PostMapping("updateUserAddress")
+    public ResponseEntity<?> updateUserAddress(@RequestBody UserAddressRequest request){
+        Address updatedAddress = addressService.updateUserAddress(request);
+        return ResponseEntity.ok(Map.of(
+                "status", "SUCCESS",
+                "message", "Address updated successfully",
+                "addressId", updatedAddress.getAddressId()
+        ));
     }
 
     @PostMapping("userAddress")
@@ -151,8 +177,22 @@ public class HomeController {
 
     @PostMapping("getOrdersByUserId")
     public ResponseEntity<?> getOrdersByUserId(@RequestBody OrderRequest request, HttpSession session) {
-        List<ProductOrder> orders = productOrderService.getOrdersByUserId(request);
-        return ResponseEntity.ok(orders);
+        // Read pagination from request body (1-based page). Provide defaults when absent.
+        int page = (request.getPage() == null || request.getPage() < 1) ? 1 : request.getPage();
+        int pageSize = (request.getPageSize() == null || request.getPageSize() < 1) ? 10 : request.getPageSize();
+
+        int pageIndex = page - 1; // convert to 0-based
+
+        var pageResult = productOrderService.getOrdersByUserIdPaged(request, pageIndex, pageSize);
+
+        return ResponseEntity.ok(Map.of(
+                "status", "Success",
+                "page", page,
+                "pageSize", pageSize,
+                "totalPages", pageResult.getTotalPages(),
+                "totalElements", pageResult.getTotalElements(),
+                "orders", pageResult.getContent()
+        ));
     }
 
     @PostMapping("/admin/getAllOrders")
@@ -180,6 +220,11 @@ public class HomeController {
                     "allowedStatuses", productOrderService.getAllowedStatuses()
             ));
         }
+    }
+
+    @PostMapping("about")
+    public String aboutPage(){
+        return "abount page";
     }
 
 }

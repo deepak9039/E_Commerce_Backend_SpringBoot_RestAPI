@@ -1,7 +1,10 @@
 package com.store.e_commerce_app.controllers;
 
+import com.store.e_commerce_app.dto.CategorySalesDTO;
 import com.store.e_commerce_app.entities.Category;
 import com.store.e_commerce_app.entities.Product;
+import com.store.e_commerce_app.repositories.ProductOrderRepository;
+import com.store.e_commerce_app.repositories.UserDltsRepository;
 import com.store.e_commerce_app.service.CategoryService;
 import com.store.e_commerce_app.service.ProductService;
 import jakarta.servlet.http.HttpSession;
@@ -21,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import org.springframework.util.StringUtils;
+import java.util.List;
 
 @RestController
 //@RequestMapping("/admin")
@@ -31,6 +35,12 @@ public class AdminController {
 
     @Autowired
     private ProductService  productService;
+
+    @Autowired
+    ProductOrderRepository productOrderRepository;
+
+    @Autowired
+    UserDltsRepository userDltsRepository;
 
     // upload dir injected from application.properties (default to resources/static/category_img)
     @Value("${app.upload.dir:src/main/resources/static/category_img}")
@@ -177,6 +187,39 @@ public class AdminController {
         return ResponseEntity.ok(Map.of("message", "Product created successfully", "product", savedProduct));
     }
 
+    @PostMapping("createBulkProducts")
+    public ResponseEntity<?> createProductsWithoutImage(
+            @RequestBody List<Product> products) {
+
+        if (products == null || products.isEmpty()) {
+            return ResponseEntity.badRequest().body("Product list cannot be empty");
+        }
+
+        if (products.size() > 50) {
+            return ResponseEntity.badRequest()
+                    .body("You can create maximum 50 products at a time");
+        }
+
+        // Check duplicate names (DB level)
+        for (Product product : products) {
+            if (productService.existsByProductName(product.getProductName())) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body("Product already exists: " + product.getProductName());
+            }
+            // set default image
+            product.setProductImageUrl("default.png");
+        }
+
+        List<Product> savedProducts = productService.saveAll(products);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Products created successfully",
+                "count", savedProducts.size(),
+                "products", savedProducts
+        ));
+    }
+
+
     @GetMapping("/findAllProducts")
     public List<Product> findAllProducts() {
         return productService.findAllProducts();
@@ -249,6 +292,49 @@ public class AdminController {
                 "message", "Success",
                 "products", products
         ));
+    }
+
+    @PostMapping("ordersCount")
+    public ResponseEntity<?> getOrdersCount() {
+        // Dummy implementation, replace with actual logic
+        long ordersCount = productOrderRepository.count();
+//        int ordersCount = 42; // Example static count
+        return ResponseEntity.ok(Map.of(
+                "message", "Success",
+                "ordersCount", ordersCount
+        ));
+    }
+
+    @PostMapping("productsCount")
+    public ResponseEntity<?> getProductsCount() {
+        long productsCount = productService.findAllProducts().size();
+        return ResponseEntity.ok(Map.of(
+                "message", "Success",
+                "productsCount", productsCount
+        ));
+    }
+
+    @PostMapping("usersCount")
+    public ResponseEntity<?> getUsersCount() {
+//        long usersCount = 0; // Replace with actual user count retrieval logic
+        long usersCount = userDltsRepository.count();
+        return ResponseEntity.ok(Map.of(
+                "message", "Success",
+                "usersCount", usersCount
+        ));
+    }
+
+    @PostMapping("/categorySales")
+    public ResponseEntity<?> getCategoryWiseSales() {
+
+        List<CategorySalesDTO> sales = categoryService.getCategorySalesData();
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "message", "Category sales fetched successfully",
+                        "data", sales
+                )
+        );
     }
 
 }

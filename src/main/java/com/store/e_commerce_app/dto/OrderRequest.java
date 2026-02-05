@@ -22,6 +22,10 @@ public class OrderRequest {
 
     private String paymentMethod;
 
+    // Optional pagination params (client may include in JSON)
+    private Integer page;      // 1-based page number
+    private Integer pageSize;  // items per page
+
     public Long getUserId() {
         return userId;
     }
@@ -100,5 +104,21 @@ public class OrderRequest {
 
     public void setPaymentMethod(String paymentMethod) {
         this.paymentMethod = paymentMethod;
+    }
+
+    public Integer getPage() {
+        return page;
+    }
+
+    public void setPage(Integer page) {
+        this.page = page;
+    }
+
+    public Integer getPageSize() {
+        return pageSize;
+    }
+
+    public void setPageSize(Integer pageSize) {
+        this.pageSize = pageSize;
     }
 }

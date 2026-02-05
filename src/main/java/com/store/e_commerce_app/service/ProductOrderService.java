@@ -10,6 +10,9 @@ import com.store.e_commerce_app.repositories.CartRepositort;
 import com.store.e_commerce_app.repositories.ProductOrderRepository;
 import com.store.e_commerce_app.util.OrderStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -113,6 +116,14 @@ public class ProductOrderService {
             allowed.add(s.name());
         }
         return allowed;
+    }
+
+    public Page<ProductOrder> getOrdersByUserIdPaged(OrderRequest orderRequest, int pageNumber, int pageSize) {
+        if (orderRequest.getUserId() == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        return productOrderRepository.findByUserDltsUserId(orderRequest.getUserId(), pageable);
     }
 
 }

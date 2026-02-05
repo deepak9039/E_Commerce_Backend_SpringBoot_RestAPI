@@ -17,6 +17,12 @@ public class Product {
     @Column(name = "productDescription")
     private String productDescription;
 
+    @Column(name = "brandDetails")
+    private String brandDetails;
+
+    @Column(name = "aboutProduct")
+    private String aboutProduct;
+
     @Column(name = "categoryName")
     private String categoryName;
 
@@ -51,6 +57,22 @@ public class Product {
 
     public void setProductDescription(String productDescription) {
         this.productDescription = productDescription;
+    }
+
+    public String getBrandDetails() {
+        return brandDetails;
+    }
+
+    public void setBrandDetails(String brandDetails) {
+        this.brandDetails = brandDetails;
+    }
+
+    public String getAboutProduct() {
+        return aboutProduct;
+    }
+
+    public void setAboutProduct(String aboutProduct) {
+        this.aboutProduct = aboutProduct;
     }
 
     public String getCategoryName() {
@@ -88,10 +110,12 @@ public class Product {
     public Product() {
     }
 
-    public Product(Long productId, String productName, String productDescription, String categoryName, Double productPrice, int stockQuantity, String productImageUrl) {
+    public Product(Long productId, String productName, String productDescription, String brandDetails, String aboutProduct, String categoryName, Double productPrice, int stockQuantity, String productImageUrl) {
         this.productId = productId;
         this.productName = productName;
         this.productDescription = productDescription;
+        this.brandDetails = brandDetails;
+        this.aboutProduct = aboutProduct;
         this.categoryName = categoryName;
         this.productPrice = productPrice;
         this.stockQuantity = stockQuantity;
