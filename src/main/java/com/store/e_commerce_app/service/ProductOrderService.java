@@ -29,12 +29,15 @@ public class ProductOrderService {
     @Autowired
     private CartRepositort cartRepositort;
 
-    public String saveOrder(OrderRequest orderRequest) {
+    // return list of saved orders so controller can include them in response
+    public List<ProductOrder> saveOrder(OrderRequest orderRequest) {
 
         List<Cart> cart = cartRepositort.findByUserDltsUserId(orderRequest.getUserId());
         if(cart == null || cart.isEmpty()) {
-            return "Cart is empty for user, cannot place order";
+            return new ArrayList<>(); // return empty list to indicate nothing saved
         }
+
+        List<ProductOrder> savedOrders = new ArrayList<>();
 
         for(Cart cart1 : cart) {
 
@@ -43,7 +46,8 @@ public class ProductOrderService {
             productOrder.setOrderDate(new Date());
 
             productOrder.setProduct(cart1.getProduct());
-            productOrder.setPrice(cart1.getProduct().getProductPrice());
+//            productOrder.setPrice(cart1.getProduct().getProductPrice());
+            productOrder.setPrice(cart1.getProduct().getDiscountPrice());
 
             productOrder.setQuantity(cart1.getQuantity());
             productOrder.setUserDlts(cart1.getUserDlts());
@@ -66,13 +70,14 @@ public class ProductOrderService {
 
             System.out.println("Saving order for product: " + cart1.getProduct().getProductName() + " for user ID: " + orderRequest.getUserId());
             System.out.println("Order Details: " + productOrder);
-            productOrderRepository.save(productOrder);
+            ProductOrder saved = productOrderRepository.save(productOrder);
+            savedOrders.add(saved);
             // Clear the cart after placing the order
             //cartRepositort.delete(cart1);
         }
 
 
-        return "Order saved successfully";
+        return savedOrders;
     }
 
     public List<ProductOrder> getOrdersByUserId(OrderRequest orderRequest) {
@@ -124,6 +129,10 @@ public class ProductOrderService {
         }
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
         return productOrderRepository.findByUserDltsUserId(orderRequest.getUserId(), pageable);
+    }
+
+    public List<ProductOrder> getLatestOrders() {
+        return productOrderRepository.findAllByOrderByIdDesc();
     }
 
 }

@@ -21,4 +21,7 @@ public class AddToCartRequest {
     public void setProductId(Long productId) {
         this.productId = productId;
     }
+
+    public static class TopProductSalesDTO {
+    }
 }

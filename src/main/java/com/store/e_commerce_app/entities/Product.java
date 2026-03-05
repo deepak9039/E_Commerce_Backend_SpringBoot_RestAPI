@@ -29,6 +29,12 @@ public class Product {
     @Column(name = "productPrice")
     private Double productPrice;
 
+    @Column(name = "discount")
+    private Integer discount;
+
+    @Column(name = "discountPrice")
+    private Double discountPrice;
+
     @Column(name = "stockQuantity")
     private int stockQuantity;
 
@@ -91,6 +97,22 @@ public class Product {
         this.productPrice = productPrice;
     }
 
+    public Integer getDiscount() {
+        return discount;
+    }
+
+    public void setDiscount(Integer discount) {
+        this.discount = discount;
+    }
+
+    public Double getDiscountPrice() {
+        return discountPrice;
+    }
+
+    public void setDiscountPrice(Double discountPrice) {
+        this.discountPrice = discountPrice;
+    }
+
     public int getStockQuantity() {
         return stockQuantity;
     }
@@ -110,7 +132,7 @@ public class Product {
     public Product() {
     }
 
-    public Product(Long productId, String productName, String productDescription, String brandDetails, String aboutProduct, String categoryName, Double productPrice, int stockQuantity, String productImageUrl) {
+    public Product(Long productId, String productName, String productDescription, String brandDetails, String aboutProduct, String categoryName, Double productPrice, Integer discount, Double discountPrice, int stockQuantity, String productImageUrl) {
         this.productId = productId;
         this.productName = productName;
         this.productDescription = productDescription;
@@ -118,6 +140,8 @@ public class Product {
         this.aboutProduct = aboutProduct;
         this.categoryName = categoryName;
         this.productPrice = productPrice;
+        this.discount = discount;
+        this.discountPrice = discountPrice;
         this.stockQuantity = stockQuantity;
         this.productImageUrl = productImageUrl;
     }

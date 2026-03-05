@@ -1,14 +1,8 @@
 package com.store.e_commerce_app.controllers;
 
 import com.store.e_commerce_app.dto.*;
-import com.store.e_commerce_app.entities.Address;
-import com.store.e_commerce_app.entities.Cart;
-import com.store.e_commerce_app.entities.ProductOrder;
-import com.store.e_commerce_app.entities.UserDlts;
-import com.store.e_commerce_app.service.AddressService;
-import com.store.e_commerce_app.service.CartService;
-import com.store.e_commerce_app.service.ProductOrderService;
-import com.store.e_commerce_app.service.UserDltsService;
+import com.store.e_commerce_app.entities.*;
+import com.store.e_commerce_app.service.*;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +24,9 @@ public class HomeController {
 
     @Autowired
     private ProductOrderService productOrderService;
+
+    @Autowired
+    private ProductService productService;
 
     @Autowired
     private AddressService addressService;
@@ -119,9 +116,35 @@ public class HomeController {
 
         List<Cart> carts = cartService.getCartByUser(userDlts.getUserId());
         Double totalOrderPrice = 0.0;
+        Double totalOrderDiscount = 0.0;
         List<Cart> updatedCart = new ArrayList<>();
+
         for (Cart cart : carts) {
-            Double totalPrice = (cart.getProduct().getProductPrice() * cart.getQuantity());
+            // Determine per-unit price: prefer discountPrice when non-null, otherwise productPrice (fall back to 0.0)
+            Double perUnitPrice = 0.0;
+            Double perUnitDiscount = 0.0; // money saved per unit
+            if (cart.getProduct() != null) {
+                Double dp = cart.getProduct().getDiscountPrice();
+                Double pp = cart.getProduct().getProductPrice();
+                perUnitPrice = (dp != null) ? dp : (pp != null ? pp : 0.0);
+                // compute monetary discount only when both prices available
+                if (dp != null && pp != null) {
+                    perUnitDiscount = pp - dp;
+                    if (perUnitDiscount < 0) perUnitDiscount = 0.0; // guard
+                } else {
+                    perUnitDiscount = 0.0;
+                }
+            }
+
+            int qty = (cart.getQuantity() != null) ? cart.getQuantity() : 0;
+            Double totalPrice = perUnitPrice * qty;
+            Double totalDiscountForItem = perUnitDiscount * qty;
+
+            // accumulate total discount (money saved) across the cart
+            totalOrderDiscount = totalOrderDiscount + totalDiscountForItem;
+            cart.setTotalOrderDiscount(totalOrderDiscount);
+
+            // set totals
             cart.setTotalPrice(totalPrice);
             totalOrderPrice = totalOrderPrice + totalPrice;
             cart.setTotalOrderPrice(totalOrderPrice);
@@ -167,10 +190,17 @@ public class HomeController {
 
     @PostMapping("saveOrder")
     public ResponseEntity<?> saveOrder(@RequestBody OrderRequest request, HttpSession session){
-        String orderMessage = productOrderService.saveOrder(request);
+        List<ProductOrder> savedOrders = productOrderService.saveOrder(request);
+        if (savedOrders == null || savedOrders.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "Failure",
+                    "message", "Cart is empty or order could not be placed"
+            ));
+        }
         return ResponseEntity.ok(Map.of(
                 "status", "Success",
-                "message", orderMessage
+                "message", "Order saved successfully",
+                "orders", savedOrders
         ));
 
     }
@@ -222,9 +252,14 @@ public class HomeController {
         }
     }
 
-    @PostMapping("about")
-    public String aboutPage(){
-        return "abount page";
+    @PostMapping("searchProducts")
+    public ResponseEntity<?> searchProducts(@RequestBody SearchProductsRequest request, HttpSession session){
+        List<Product> products = productService.searchProducts(request.getQuery());
+        return ResponseEntity.ok(Map.of(
+                "status", "Success",
+                "products", products
+        ));
     }
+
 
 }

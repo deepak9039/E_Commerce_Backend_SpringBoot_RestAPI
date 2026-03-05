@@ -1,11 +1,15 @@
 package com.store.e_commerce_app.controllers;
 
 import com.store.e_commerce_app.dto.CategorySalesDTO;
+import com.store.e_commerce_app.dto.PageRequest;
+import com.store.e_commerce_app.dto.TopProductSalesDTO;
 import com.store.e_commerce_app.entities.Category;
 import com.store.e_commerce_app.entities.Product;
+import com.store.e_commerce_app.entities.ProductOrder;
 import com.store.e_commerce_app.repositories.ProductOrderRepository;
 import com.store.e_commerce_app.repositories.UserDltsRepository;
 import com.store.e_commerce_app.service.CategoryService;
+import com.store.e_commerce_app.service.ProductOrderService;
 import com.store.e_commerce_app.service.ProductService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +45,9 @@ public class AdminController {
 
     @Autowired
     UserDltsRepository userDltsRepository;
+
+    @Autowired
+    private ProductOrderService productOrderService;
 
     // upload dir injected from application.properties (default to resources/static/category_img)
     @Value("${app.upload.dir:src/main/resources/static/category_img}")
@@ -173,18 +180,27 @@ public class AdminController {
             product.setProductImageUrl(imageUrl);
         }
 
-        Boolean exists = productService.existsByProductName(product.getProductName());
-        if (exists) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Product name already exists!");
+        // Compute discountPrice for the product on create (use double division to avoid integer truncation)
+        if (product.getProductPrice() != null && product.getDiscount() != null) {
+            double price = product.getProductPrice();
+            double pct = product.getDiscount() / 100.0;
+            double discountAmount = price * pct;
+            double discountPrice = price - discountAmount;
+            product.setDiscountPrice(discountPrice);
         }
 
-        Product savedProduct = productService.createproduct(product);
-        if (Objects.isNull(savedProduct)) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Something went wrong!");
-        }
+         Boolean exists = productService.existsByProductName(product.getProductName());
+         if (exists) {
+             return ResponseEntity.status(HttpStatus.CONFLICT).body("Product name already exists!");
+         }
 
-        // Return success message + saved product
-        return ResponseEntity.ok(Map.of("message", "Product created successfully", "product", savedProduct));
+         Product savedProduct = productService.createproduct(product);
+         if (Objects.isNull(savedProduct)) {
+             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Something went wrong!");
+         }
+
+         // Return success message + saved product
+         return ResponseEntity.ok(Map.of("message", "Product created successfully", "product", savedProduct));
     }
 
     @PostMapping("createBulkProducts")
@@ -220,9 +236,22 @@ public class AdminController {
     }
 
 
-    @GetMapping("/findAllProducts")
-    public List<Product> findAllProducts() {
-        return productService.findAllProducts();
+    @PostMapping("/findAllProducts")
+    public ResponseEntity<?> findAllProducts(@RequestBody PageRequest pageRequest) {
+        if (pageRequest.getPage() < 0 || pageRequest.getPageSize() <= 0) {
+            return ResponseEntity.badRequest().body("Invalid page number or size");
+        }
+        var pageResult = productService.findAllProductsWithPage(pageRequest.getPage(), pageRequest.getPageSize());
+        return ResponseEntity.ok(Map.of(
+                "message", "Products fetched successfully",
+                "products", pageResult.getContent(),
+                "page", pageRequest.getPage(),
+                "pageSize", pageRequest.getPageSize(),
+                "totalPages", pageResult.getTotalPages(),
+                "totalElements", pageResult.getTotalElements()
+        ));
+
+        //        return productService.findAllProducts();
     }
 
     @GetMapping("/product/{id}")
@@ -279,10 +308,27 @@ public class AdminController {
 //        product.setCreatedAt(existing.getCreatedAt());  // if you track timestamps
         product.setProductId(existing.getProductId());
 
+        // Compute discountPrice for update: prefer incoming values, fallback to existing
+        Double priceToUse = product.getProductPrice() != null ? product.getProductPrice() : existing.getProductPrice();
+        Integer discountToUse = product.getDiscount() != null ? product.getDiscount() : existing.getDiscount();
+
+        double discountPrice = 0.0;
+        if (priceToUse != null && discountToUse != null) {
+            double pct = discountToUse / 100.0;
+            double discountAmount = priceToUse * pct;
+            discountPrice = priceToUse - discountAmount;
+        }
+
+        // Ensure the product object we save contains the computed discount and discountPrice
+        if (product.getDiscount() == null) {
+            product.setDiscount(existing.getDiscount());
+        }
+        product.setDiscountPrice(discountPrice);
+
         Product updated = productService.updateProduct(product);
 
         // Return success message + updated product
-        return ResponseEntity.ok(Map.of("message", "Product updated successfully", "product", updated));
+        return ResponseEntity.ok(Map.of("message", "Success", "product", updated));
     }
 
     @PostMapping("findProductsByCategoryName" )
@@ -331,10 +377,27 @@ public class AdminController {
 
         return ResponseEntity.ok(
                 Map.of(
-                        "message", "Category sales fetched successfully",
+                        "message", "Success",
                         "data", sales
                 )
         );
     }
 
+    @PostMapping("topSellingProducts")
+    public ResponseEntity<?> getTopSellingProducts() {
+    List<TopProductSalesDTO> topProductSale = productService.getTopSellingProducts();
+    return ResponseEntity.ok(Map.of(
+            "message", "Success",
+            "products", topProductSale
+    ));
+    }
+
+    @PostMapping("orderDesc")
+    public ResponseEntity<?> getOrderDesc() {
+        List<ProductOrder> orders = productOrderService.getLatestOrders();
+        return ResponseEntity.ok(Map.of(
+                "message", "Success",
+                "orders", orders
+        ));
+    }
 }

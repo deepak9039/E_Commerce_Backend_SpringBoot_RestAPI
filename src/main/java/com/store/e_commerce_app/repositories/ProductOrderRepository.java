@@ -1,5 +1,6 @@
 package com.store.e_commerce_app.repositories;
 
+import com.store.e_commerce_app.dto.TopProductSalesDTO;
 import com.store.e_commerce_app.entities.ProductOrder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +17,9 @@ public interface ProductOrderRepository extends JpaRepository<ProductOrder, Long
 
     ProductOrder findByOrderId(String orderId);
 
+    // Latest products by ID DESC
+    List<ProductOrder> findAllByOrderByIdDesc();
+
     // pageable query
     Page<ProductOrder> findByUserDltsUserId(Long userId, Pageable pageable);
 
@@ -30,8 +34,22 @@ public interface ProductOrderRepository extends JpaRepository<ProductOrder, Long
     WHERE po.status = 'DELIVERED'
     GROUP BY p.categoryName
     ORDER BY SUM(po.quantity) DESC
-""")
+    """)
     List<CategorySalesDTO> getCategoryWiseSales();
 
+    @Query("""
+    SELECT new com.store.e_commerce_app.dto.TopProductSalesDTO(
+        p.productId,
+        p.productName,
+        SUM(po.quantity),
+        SUM(po.quantity * po.price)
+    )
+    FROM ProductOrder po
+    JOIN po.product p
+    WHERE po.status = 'DELIVERED'
+    GROUP BY p.productId, p.productName
+    ORDER BY SUM(po.quantity) DESC
+    """)
+    List<TopProductSalesDTO> getTopSellingProducts();
 
 }
