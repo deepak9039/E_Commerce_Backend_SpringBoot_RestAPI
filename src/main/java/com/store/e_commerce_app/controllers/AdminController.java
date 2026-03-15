@@ -2,6 +2,7 @@ package com.store.e_commerce_app.controllers;
 
 import com.store.e_commerce_app.dto.CategorySalesDTO;
 import com.store.e_commerce_app.dto.PageRequest;
+import com.store.e_commerce_app.dto.SalesOverviewDTO;
 import com.store.e_commerce_app.dto.TopProductSalesDTO;
 import com.store.e_commerce_app.entities.Category;
 import com.store.e_commerce_app.entities.Product;
@@ -236,7 +237,7 @@ public class AdminController {
     }
 
 
-    @PostMapping("/findAllProducts")
+    @PostMapping("/admin/findAllProducts")
     public ResponseEntity<?> findAllProducts(@RequestBody PageRequest pageRequest) {
         if (pageRequest.getPage() < 0 || pageRequest.getPageSize() <= 0) {
             return ResponseEntity.badRequest().body("Invalid page number or size");
@@ -252,6 +253,34 @@ public class AdminController {
         ));
 
         //        return productService.findAllProducts();
+    }
+
+    @PostMapping("/findAllProducts")
+    public ResponseEntity<?> findAllProductsAdmin(@RequestBody PageRequest pageRequest) {
+        if (pageRequest.getPage() < 0 || pageRequest.getPageSize() <= 0) {
+            return ResponseEntity.badRequest().body("Invalid page number or size");
+        }
+        var pageResult = productService.findAllProductsWithPage(pageRequest.getPage(), pageRequest.getPageSize());
+        return ResponseEntity.ok(Map.of(
+                "message", "Products fetched successfully",
+                "products", pageResult.getContent(),
+                "page", pageRequest.getPage(),
+                "pageSize", pageRequest.getPageSize(),
+                "totalPages", pageResult.getTotalPages(),
+                "totalElements", pageResult.getTotalElements()
+        ));
+
+        //        return productService.findAllProducts();
+    }
+
+
+    @PostMapping("findAllSponsoredProducts")
+    public ResponseEntity<?> findAllSponsoredProducts() {
+        List<Product> products = productService.findAllSponsoredProducts();
+        return ResponseEntity.ok(Map.of(
+                "message", "Success",
+                "products", products
+        ));
     }
 
     @GetMapping("/product/{id}")
@@ -360,6 +389,15 @@ public class AdminController {
         ));
     }
 
+    @PostMapping("totalRevenue")
+    public ResponseEntity<?> getTotalRevenue() {
+        Double totalRevenue = productOrderService.totalRevenue().getTotalRevenue();
+        return ResponseEntity.ok(Map.of(
+                "message", "Success",
+                "totalRevenue", totalRevenue != null ? totalRevenue : 0.0
+        ));
+    }
+
     @PostMapping("usersCount")
     public ResponseEntity<?> getUsersCount() {
 //        long usersCount = 0; // Replace with actual user count retrieval logic
@@ -400,4 +438,16 @@ public class AdminController {
                 "orders", orders
         ));
     }
+
+    @GetMapping("/sales-overview")
+    public ResponseEntity<?> getSalesOverview(){
+
+        List<SalesOverviewDTO> data = productOrderService.getWeeklySalesOverview();
+
+        return ResponseEntity.ok(Map.of(
+                "status","Success",
+                "data", data
+        ));
+    }
+
 }

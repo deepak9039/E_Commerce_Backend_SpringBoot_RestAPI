@@ -1,6 +1,8 @@
 package com.store.e_commerce_app.service;
 
 import com.store.e_commerce_app.dto.OrderRequest;
+import com.store.e_commerce_app.dto.SalesOverviewDTO;
+import com.store.e_commerce_app.dto.TotalRevenueDTO;
 import com.store.e_commerce_app.dto.UpdateOrderStatus;
 import com.store.e_commerce_app.entities.Cart;
 import com.store.e_commerce_app.entities.OrderAddress;
@@ -13,8 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -47,8 +51,20 @@ public class ProductOrderService {
 
             productOrder.setProduct(cart1.getProduct());
 //            productOrder.setPrice(cart1.getProduct().getProductPrice());
-            productOrder.setPrice(cart1.getProduct().getDiscountPrice());
-
+            Double price;
+            if (cart1.getProduct().getDiscountPrice() == null) {
+//                productOrder.setPrice(cart1.getProduct().getProductPrice());
+                price = cart1.getProduct().getProductPrice();
+            }
+            else {
+//                productOrder.setPrice(cart1.getProduct().getDiscountPrice());
+                price = cart1.getProduct().getDiscountPrice();
+            }
+            // Add delivery charge if price < 1000
+            if (price < 1000) {
+                price = price + 50;
+            }
+            productOrder.setPrice(price);
             productOrder.setQuantity(cart1.getQuantity());
             productOrder.setUserDlts(cart1.getUserDlts());
 
@@ -88,13 +104,20 @@ public class ProductOrderService {
         return productOrderRepository.findByUserDltsUserId(orderRequest.getUserId());
     }
 
-    public List<ProductOrder> getAllOrders() {
-        return productOrderRepository.findAll();
+//    public List<ProductOrder> getAllOrders() {
+//        return productOrderRepository.findAll();
+//    }
+    public Page<ProductOrder> getAllOrders(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("orderDate").descending());
+        return productOrderRepository.findAll(pageable);
     }
 
     public ProductOrder updateOrderStatus(UpdateOrderStatus updateOrderStatus) {
         // Validate status inside service and throw custom exception on invalid
         String status = updateOrderStatus.getStatus();
+        Integer quntity = updateOrderStatus.getQuantity();
+
+        System.out.println("Order Quntity: " + quntity);
         if (status == null || status.isBlank()) {
             throw new InvalidOrderStatusException("Order status is required. Allowed: " + String.join(",", getAllowedStatuses()));
         }
@@ -110,6 +133,7 @@ public class ProductOrderService {
         if(productOrder == null) {
             throw new RuntimeException("Order not found with ID: " + orderId);
         }
+
         productOrder.setStatus(status);
         return productOrderRepository.save(productOrder);
     }
@@ -133,6 +157,28 @@ public class ProductOrderService {
 
     public List<ProductOrder> getLatestOrders() {
         return productOrderRepository.findAllByOrderByIdDesc();
+    }
+
+    public TotalRevenueDTO totalRevenue() {
+        return productOrderRepository.getTotalRevenue();
+    }
+
+    //sales overview by day of week (Monday, Tuesday, etc.) for the last 7 days
+    public List<SalesOverviewDTO> getWeeklySalesOverview(){
+
+        List<Object[]> results = productOrderRepository.getWeeklySalesOverview();
+
+        List<SalesOverviewDTO> list = new ArrayList<>();
+
+        for(Object[] row : results){
+            String day = (String) row[0];
+            Long orders = ((Number) row[1]).longValue();
+            Double sales = ((Number) row[2]).doubleValue();
+
+            list.add(new SalesOverviewDTO(day.trim(), orders, sales));
+        }
+
+        return list;
     }
 
 }

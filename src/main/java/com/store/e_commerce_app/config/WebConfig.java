@@ -18,6 +18,9 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${app.upload.product:src/main/resources/static/product_img}")
     private String productUploadDir;
 
+    @Value("${app.upload.review.dir:src/main/resources/static/review_img}")
+    private String reviewUploadDir;
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
 
@@ -34,5 +37,13 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/image/product/**")
                 .addResourceLocations(prodLocation)
                 .setCachePeriod(3600);
+
+        // map product folder
+        Path reviewPath = Paths.get(reviewUploadDir).toAbsolutePath().normalize();
+        String reviewLocation = "file:" + reviewPath.toString() + "/";
+        registry.addResourceHandler("/image/review/**")
+                .addResourceLocations(reviewLocation)
+                .setCachePeriod(3600);
     }
+
 }

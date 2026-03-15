@@ -41,6 +41,9 @@ public class Product {
     @Column(name = "productImageUrl")
     private String productImageUrl;
 
+    @Column(name = "is_sponsored", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean isSponsored = false;
+
     public Long getProductId() {
         return productId;
     }
@@ -129,10 +132,18 @@ public class Product {
         this.productImageUrl = productImageUrl;
     }
 
+    public Boolean getIsSponsored() {
+        return isSponsored;
+    }
+
+    public void setIsSponsored(Boolean isSponsored) {
+        this.isSponsored = isSponsored;
+    }
+
     public Product() {
     }
 
-    public Product(Long productId, String productName, String productDescription, String brandDetails, String aboutProduct, String categoryName, Double productPrice, Integer discount, Double discountPrice, int stockQuantity, String productImageUrl) {
+    public Product(Long productId, String productName, String productDescription, String brandDetails, String aboutProduct, String categoryName, Double productPrice, Integer discount, Double discountPrice, int stockQuantity, String productImageUrl, Boolean isSponsored) {
         this.productId = productId;
         this.productName = productName;
         this.productDescription = productDescription;
@@ -144,5 +155,6 @@ public class Product {
         this.discountPrice = discountPrice;
         this.stockQuantity = stockQuantity;
         this.productImageUrl = productImageUrl;
+        this.isSponsored = isSponsored;
     }
 }

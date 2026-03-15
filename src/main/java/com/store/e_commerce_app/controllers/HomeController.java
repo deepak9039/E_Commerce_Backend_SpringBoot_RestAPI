@@ -5,6 +5,7 @@ import com.store.e_commerce_app.entities.*;
 import com.store.e_commerce_app.service.*;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -225,12 +226,26 @@ public class HomeController {
         ));
     }
 
+//    @PostMapping("/admin/getAllOrders")
+//    public ResponseEntity<?> getAllOrders(HttpSession session) {
+//        List<ProductOrder> orders = productOrderService.getAllOrders();
+//        return ResponseEntity.ok(Map.of(
+//                "status", "Success",
+//                "orders", orders
+//        ));
+//    }
     @PostMapping("/admin/getAllOrders")
-    public ResponseEntity<?> getAllOrders(HttpSession session) {
-        List<ProductOrder> orders = productOrderService.getAllOrders();
+    public ResponseEntity<?> getAllOrders(@RequestBody PageRequestDTO request) {
+
+        Page<ProductOrder> pageResult =
+                productOrderService.getAllOrders(request.getPage(), request.getPageSize());
+
         return ResponseEntity.ok(Map.of(
                 "status", "Success",
-                "orders", orders
+                "orders", pageResult.getContent(),
+                "currentPage", pageResult.getNumber(),
+                "totalPages", pageResult.getTotalPages(),
+                "totalItems", pageResult.getTotalElements()
         ));
     }
 

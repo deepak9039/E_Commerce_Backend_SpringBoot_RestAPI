@@ -48,6 +48,10 @@ public class ProductService {
         return productRepository.findAll();
     }
 
+    public List<Product> findAllSponsoredProducts(){
+        return productRepository.findByIsSponsoredTrue();
+    }
+
     public Product findByProductId(Long productId){
         return productRepository.findByProductId(productId);
     }
