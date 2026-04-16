@@ -1,9 +1,6 @@
 package com.store.e_commerce_app.controllers;
 
-import com.store.e_commerce_app.dto.CategorySalesDTO;
-import com.store.e_commerce_app.dto.PageRequest;
-import com.store.e_commerce_app.dto.SalesOverviewDTO;
-import com.store.e_commerce_app.dto.TopProductSalesDTO;
+import com.store.e_commerce_app.dto.*;
 import com.store.e_commerce_app.entities.Category;
 import com.store.e_commerce_app.entities.Product;
 import com.store.e_commerce_app.entities.ProductOrder;
@@ -15,6 +12,7 @@ import com.store.e_commerce_app.service.ProductService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -360,12 +358,25 @@ public class AdminController {
         return ResponseEntity.ok(Map.of("message", "Success", "product", updated));
     }
 
-    @PostMapping("findProductsByCategoryName" )
-    public ResponseEntity<?> findProductsByCategoryName(@RequestBody Category category, HttpSession session) {
-        List<Product> products = productService.findProductsByCategoryName(category.getCategoryName());
+    @PostMapping("findProductsByCategoryName")
+    public ResponseEntity<?> findProductsByCategoryName(@RequestBody com.store.e_commerce_app.dto.FindProductsByCategoryRequest request) {
+//        if (request.getCategoryName() == null || request.getCategoryName().isBlank()) {
+//            return ResponseEntity.badRequest().body(Map.of("status", "Failure", "message", "categoryName is required"));
+//        }
+//        int page = request.getPage() < 0 ? 0 : request.getPage();
+//        int pageSize = request.getPageSize() <= 0 ? 50 : request.getPageSize();
+
+        var pageResult = productService.findProductsByCategoryName(request.getCategoryName(),request.getPage(), request.getPageSize());
+
+
+//        List<Product> products = productService.findProductsByCategoryName(request.getCategoryName(), page, pageSize);
         return ResponseEntity.ok(Map.of(
-                "message", "Success",
-                "products", products
+                "status", "Success",
+                "products", pageResult.getContent(),
+                "page", request.getPage(),
+                "pageSize", request.getPageSize(),
+                "totalPages", pageResult.getTotalPages(),
+                "totalElements", pageResult.getTotalElements()
         ));
     }
 

@@ -45,6 +45,27 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
 
+        <!-- PDF generation (Apache PDFBox) -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>2.0.27</version>
+        </dependency>
+
+        <!-- Apache Commons Text + Math for TF-IDF and cosine similarity -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.10.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>3.6.1</version>
+        </dependency>
+
+        <!-- Mahout removed: using in-app item-based recommender to avoid external dependency issues -->
+
         <!-- Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

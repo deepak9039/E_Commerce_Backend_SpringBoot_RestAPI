@@ -12,7 +12,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     boolean existsByProductName(String productName);
 
-    List<Product> findBycategoryName(String categoryName);
+    Page<Product> findBycategoryName(String categoryName, Pageable pageable);
 
     //Page
     Page<Product> findAll(Pageable pageable);

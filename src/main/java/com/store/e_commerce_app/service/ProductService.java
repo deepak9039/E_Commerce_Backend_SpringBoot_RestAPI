@@ -64,8 +64,9 @@ public class ProductService {
         return productRepository.existsByProductName(productName);
     }
 
-    public List<Product> findProductsByCategoryName(String categoryName){
-        return productRepository.findBycategoryName(categoryName);
+    public Page<Product> findProductsByCategoryName(String categoryName, int pageNumber, int pageSize){
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        return productRepository.findBycategoryName(categoryName, pageable);
     }
 
     public List<Product> saveAll(List<Product> products) {

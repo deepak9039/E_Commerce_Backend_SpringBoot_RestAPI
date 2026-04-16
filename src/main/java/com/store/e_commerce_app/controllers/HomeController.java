@@ -6,6 +6,7 @@ import com.store.e_commerce_app.service.*;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -105,11 +106,26 @@ public class HomeController {
         return userDltsService.getAllUsers();
     }
 
+//    @PostMapping("addToCart")
+//    public ResponseEntity<?> addToCart(@RequestBody AddToCartRequest request, HttpSession session){
+//
+//        Cart cart = cartService.saveCart(request.getProductId(), request.getUserId());
+//        return ResponseEntity.ok(cart);
+//    }
     @PostMapping("addToCart")
-    public ResponseEntity<?> addToCart(@RequestBody AddToCartRequest request, HttpSession session){
+    public ResponseEntity<?> addToCart(@RequestBody AddToCartRequest request) {
+        try {
+            Cart cart = cartService.saveCart(request.getProductId(), request.getUserId());
+            return ResponseEntity.ok(cart);
 
-        Cart cart = cartService.saveCart(request.getProductId(), request.getUserId());
-        return ResponseEntity.ok(cart);
+        } catch (RuntimeException ex) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of(
+                            "status", "FAILED",
+                            "message", ex.getMessage()
+                    ));
+        }
     }
 
     @PostMapping("cart")
