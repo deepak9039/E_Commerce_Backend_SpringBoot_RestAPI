@@ -24,9 +24,12 @@ public class AuthSuccessHandlerImpl implements AuthenticationSuccessHandler {
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 
         Set<String> roles = AuthorityUtils.authorityListToSet(authorities);
-        if (roles.contains("ROLE_ADMIN")) {
+        // Accept multiple name variants for admin-like users
+        if (roles.contains("ROLE_ADMIN") || roles.contains("ADMIN")
+                || roles.contains("ROLE_SUPER_ADMIN") || roles.contains("SUPER_ADMIN")
+                || roles.contains("ROLE_SUPER_USER") || roles.contains("SUPER_USER")) {
             response.sendRedirect("/admin/");
-        }else {
+        } else {
             response.sendRedirect("/");
         }
 

@@ -2,6 +2,7 @@ package com.store.e_commerce_app.service;
 
 import com.store.e_commerce_app.dto.TopProductSalesDTO;
 import com.store.e_commerce_app.entities.Product;
+import com.store.e_commerce_app.entities.UserDlts;
 import com.store.e_commerce_app.repositories.CategoryRepository;
 import com.store.e_commerce_app.repositories.ProductOrderRepository;
 import com.store.e_commerce_app.repositories.ProductRepository;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -42,6 +44,22 @@ public class ProductService {
         product.setDiscountPrice(discountPrice);
 
         return productRepository.save(product);
+    }
+
+    // Create product and set its owner (admin who created it)
+    public Product createProductWithOwner(Product product, UserDlts owner) {
+        product.setOwner(owner);
+        return createproduct(product);
+    }
+
+    // Return products owned by a particular admin user
+    public List<Product> findProductsByOwner(Long ownerId) {
+        return productRepository.findByOwner_UserId(ownerId);
+    }
+
+    // Return products not owned by a particular admin (optional)
+    public List<Product> findProductsNotOwnedBy(Long ownerId) {
+        return productRepository.findByOwner_UserIdNot(ownerId);
     }
 
     public List<Product> findAllProducts(){
@@ -86,5 +104,36 @@ public class ProductService {
         return productOrderRepository.getTopSellingProducts();
     }
 
+    // New method: find products whose discount percentage is >= minPercent
+    public List<Product> findProductsByMinDiscount(int minPercent) {
+        // repository returns products with discount >= minPercent
+        List<Product> products = productRepository.findByDiscountGreaterThanEqual(minPercent);
+        // Ensure discountPrice is set for each product (fallback to productPrice when null)
+        for (Product p : products) {
+            if (p.getDiscountPrice() == null) {
+                Double price = p.getProductPrice();
+                Integer disc = p.getDiscount() != null ? p.getDiscount() : 0;
+                if (price != null) {
+                    double pct = disc / 100.0;
+                    double dp = price - (price * pct);
+                    p.setDiscountPrice(dp);
+                } else {
+                    p.setDiscountPrice(0.0);
+                }
+            }
+        }
+        return products;
+    }
+
+    public Page<Product> findProductsByOwnerPaged(Long ownerId, int pageNumber, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "productId"));
+        return productRepository.findByOwner_UserId(ownerId, pageable);
+    }
+
+    // If super admin wants paged results across all products
+    public Page<Product> findAllProductsWithPageSorted(int pageNumber, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "productId"));
+        return productRepository.findAll(pageable);
+    }
 
 }

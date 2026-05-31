@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+@CrossOrigin(origins = "http://localhost:5174")
 @RestController
 public class UserController {
 
@@ -47,6 +48,34 @@ public class UserController {
 
             CustomUser user = (CustomUser) authentication.getPrincipal();
 
+            // Enforce SUPER_ADMIN approval for admin/seller roles
+            String role = user.getRole();
+            boolean isAdminLike = false;
+            if (role != null) {
+                String normalized = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+                if (normalized.equals("ROLE_ADMIN") || normalized.equals("ROLE_SUPER_ADMIN") || normalized.equals("ROLE_SUPER_USER")) {
+                    isAdminLike = true;
+                }
+            }
+
+            if (isAdminLike) {
+                // load entity to check approval flag
+                UserDlts full = userDltsService.findByUserId(user.getUserId());
+                if (full != null && (full.getApprovedBySuperAdmin() == null || !full.getApprovedBySuperAdmin())) {
+                    // deny access for admin-like users not approved by a SUPER_ADMIN
+                    // also clear authentication from context
+                    SecurityContextHolder.clearContext();
+                    session.removeAttribute("SPRING_SECURITY_CONTEXT");
+                    return ResponseEntity.status(403).body(Map.of(
+                            "status", "FAILED",
+                            "message", "Your account is under review. Please wait for admin approval."
+                    ));
+                }
+            }
+
+            // update last login time for audit
+            userDltsService.updateLastLoginTime(user.getUserId());
+
             return ResponseEntity.ok(
                     Map.of(
                             "status", "SUCCESS",
@@ -78,5 +107,6 @@ public class UserController {
                 )
         );
     }
+
 
 }

@@ -1,20 +1,25 @@
 package com.store.e_commerce_app.controllers;
 
+import com.store.e_commerce_app.config.CustomUser;
 import com.store.e_commerce_app.dto.*;
 import com.store.e_commerce_app.entities.Category;
 import com.store.e_commerce_app.entities.Product;
 import com.store.e_commerce_app.entities.ProductOrder;
+import com.store.e_commerce_app.entities.UserDlts;
 import com.store.e_commerce_app.repositories.ProductOrderRepository;
 import com.store.e_commerce_app.repositories.UserDltsRepository;
 import com.store.e_commerce_app.service.CategoryService;
 import com.store.e_commerce_app.service.ProductOrderService;
 import com.store.e_commerce_app.service.ProductService;
+import com.store.e_commerce_app.service.UserDltsService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
@@ -28,7 +33,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import org.springframework.util.StringUtils;
 import java.util.List;
+import java.util.stream.Collectors;
 
+@CrossOrigin(origins = "http://localhost:5174")
 @RestController
 //@RequestMapping("/admin")
 public class AdminController {
@@ -47,6 +54,9 @@ public class AdminController {
 
     @Autowired
     private ProductOrderService productOrderService;
+
+    @Autowired
+    private UserDltsService userDltsService;
 
     // upload dir injected from application.properties (default to resources/static/category_img)
     @Value("${app.upload.dir:src/main/resources/static/category_img}")
@@ -160,7 +170,8 @@ public class AdminController {
     @PostMapping(value = "/admin/createProduct", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createProduct(
             @RequestPart("product") Product product,
-            @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            Authentication authentication) throws IOException {
 
         // Create product upload directory under resources/static/product_img
         Path uploadPath = Paths.get(uploadProductDir).toAbsolutePath().normalize();
@@ -188,6 +199,14 @@ public class AdminController {
             product.setDiscountPrice(discountPrice);
         }
 
+        // Set owner based on authenticated user
+        if (authentication != null && authentication.getPrincipal() instanceof CustomUser) {
+            CustomUser cu = (CustomUser) authentication.getPrincipal();
+            Long adminId = cu.getUserId();
+            UserDlts owner = userDltsService.findByUserId(adminId);
+            product.setOwner(owner);
+        }
+
          Boolean exists = productService.existsByProductName(product.getProductName());
          if (exists) {
              return ResponseEntity.status(HttpStatus.CONFLICT).body("Product name already exists!");
@@ -201,6 +220,66 @@ public class AdminController {
          // Return success message + saved product
          return ResponseEntity.ok(Map.of("message", "Product created successfully", "product", savedProduct));
     }
+
+    // Return products owned by the authenticated admin (super admin can see all)
+    @PostMapping("/admin/myProducts")
+    public ResponseEntity<?> myProducts(@RequestBody com.store.e_commerce_app.dto.PageRequestDTO pageRequest, Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUser)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","Unauthorized"));
+        }
+        CustomUser cu = (CustomUser) authentication.getPrincipal();
+        String role = cu.getRole();
+
+        int page = pageRequest.getPage() < 0 ? 0 : pageRequest.getPage();
+        int pageSize = pageRequest.getPageSize() <= 0 ? 50 : pageRequest.getPageSize();
+
+        if ("SUPER_ADMIN".equals(role)) {
+            Page<Product> pageResult = productService.findAllProductsWithPageSorted(page, pageSize);
+            return ResponseEntity.ok(Map.of(
+                    "status","Success",
+                    "products", pageResult.getContent(),
+                    "currentPage", pageResult.getNumber(),
+                    "totalPages", pageResult.getTotalPages(),
+                    "totalItems", pageResult.getTotalElements()
+            ));
+        } else {
+            Page<Product> pageResult = productService.findProductsByOwnerPaged(cu.getUserId(), page, pageSize);
+            return ResponseEntity.ok(Map.of(
+                    "status","Success",
+                    "products", pageResult.getContent(),
+                    "currentPage", pageResult.getNumber(),
+                    "totalPages", pageResult.getTotalPages(),
+                    "totalItems", pageResult.getTotalElements()
+            ));
+        }
+    }
+
+    // Endpoint to change product status - only SUPER_ADMIN allowed
+    @PostMapping("/admin/changeProductStatus")
+    public ResponseEntity<?> changeProductStatus(@RequestBody Map<String, Object> body, Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUser)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","Unauthorized"));
+        }
+        CustomUser cu = (CustomUser) authentication.getPrincipal();
+        if (!"SUPER_ADMIN".equals(cu.getRole())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message","Only super admin can change product status"));
+        }
+        if (!body.containsKey("productId") || !body.containsKey("status")) {
+            return ResponseEntity.badRequest().body(Map.of("message","productId and status are required"));
+        }
+        Long productId = Long.valueOf(String.valueOf(body.get("productId")));
+        String status = String.valueOf(body.get("status"));
+        Product prod = productService.findByProductId(productId);
+        if (prod == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message","Product not found"));
+        }
+        // set status - existing Product entity doesn't have status field, this is a business attribute we can store in ProductOrder or elsewhere
+        // For now we'll set isSponsored as a proxy for status change (you can replace with a dedicated status field)
+        prod.setIsSponsored("ACTIVE".equalsIgnoreCase(status));
+        productService.updateProduct(prod);
+        return ResponseEntity.ok(Map.of("message","Product status updated","product", prod));
+    }
+
 
     @PostMapping("createBulkProducts")
     public ResponseEntity<?> createProductsWithoutImage(
@@ -298,7 +377,8 @@ public class AdminController {
     @PostMapping(value = "/admin/updateProduct", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateProduct(
             @RequestPart("product") Product product,
-            @RequestPart(value = "image", required = false) MultipartFile image) throws IOException {
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            Authentication authentication) throws IOException {
 
         // Fetch existing product
         Product existing = productService.findByProductId(product.getProductId());
@@ -351,6 +431,14 @@ public class AdminController {
             product.setDiscount(existing.getDiscount());
         }
         product.setDiscountPrice(discountPrice);
+
+        // Set owner based on authenticated user
+        if (authentication != null && authentication.getPrincipal() instanceof CustomUser) {
+            CustomUser cu = (CustomUser) authentication.getPrincipal();
+            Long adminId = cu.getUserId();
+            UserDlts owner = userDltsService.findByUserId(adminId);
+            product.setOwner(owner);
+        }
 
         Product updated = productService.updateProduct(product);
 
@@ -460,5 +548,88 @@ public class AdminController {
                 "data", data
         ));
     }
+
+    // helper: check if authenticated principal is super admin (accept both ROLE_SUPER_ADMIN and SUPER_ADMIN)
+    private boolean isSuperAdmin(CustomUser cu, Authentication authentication) {
+        if (cu == null) return false;
+        String role = cu.getRole();
+        if (role != null && (role.equalsIgnoreCase("SUPER_ADMIN") || role.equalsIgnoreCase("ROLE_SUPER_ADMIN"))) {
+            return true;
+        }
+        if (authentication != null) {
+            return authentication.getAuthorities().stream()
+                    .map(a -> a.getAuthority())
+                    .anyMatch(s -> s != null && s.toUpperCase().contains("SUPER_ADMIN"));
+        }
+        return false;
+    }
+
+    @PostMapping("/admin/getOrdersForAdmin")
+    public ResponseEntity<?> getOrdersForAdmin(@RequestBody com.store.e_commerce_app.dto.PageRequest pageRequest, Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUser)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","Unauthorized"));
+        }
+        CustomUser cu = (CustomUser) authentication.getPrincipal();
+
+        int page = Math.max(0, pageRequest.getPage());
+        int pageSize = pageRequest.getPageSize() <= 0 ? 50 : pageRequest.getPageSize();
+
+        // If super admin, return all orders paged
+        if (isSuperAdmin(cu, authentication)) {
+            var pageResult = productOrderService.getAllOrders(page, pageSize);
+            return ResponseEntity.ok(Map.of(
+                    "message", "Orders fetched successfully",
+                    "orders", pageResult.getContent(),
+                    "page", page,
+                    "pageSize", pageSize,
+                    "totalPages", pageResult.getTotalPages(),
+                    "totalElements", pageResult.getTotalElements()
+            ));
+        }
+
+        // For normal admins, return orders for products owned by this admin
+        var pageResult = productOrderRepository.findByProductOwnerId(cu.getUserId(), org.springframework.data.domain.PageRequest.of(page, pageSize));
+        return ResponseEntity.ok(Map.of(
+                "message", "Orders fetched successfully",
+                "orders", pageResult.getContent(),
+                "page", page,
+                "pageSize", pageSize,
+                "totalPages", pageResult.getTotalPages(),
+                "totalElements", pageResult.getTotalElements()
+        ));
+    }
+
+    @PostMapping("/admin/getOrdersForAdminList")
+    public ResponseEntity<?> getOrdersForAdminList(Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUser)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","Unauthorized"));
+        }
+        CustomUser cu = (CustomUser) authentication.getPrincipal();
+
+        if (isSuperAdmin(cu, authentication)) {
+            List<ProductOrder> all = productOrderRepository.findAll();
+            return ResponseEntity.ok(Map.of("message","Success","orders", all));
+        }
+
+        List<ProductOrder> orders = productOrderRepository.findByProductOwnerId(cu.getUserId());
+        return ResponseEntity.ok(Map.of("message","Success","orders", orders));
+    }
+
+    @GetMapping("/admin/auth/me")
+    public ResponseEntity<?> authMe(Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUser)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("authenticated", false));
+        }
+        CustomUser cu = (CustomUser) authentication.getPrincipal();
+        var auths = cu.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
+        return ResponseEntity.ok(Map.of(
+                "authenticated", true,
+                "userId", cu.getUserId(),
+                "username", cu.getUsername(),
+                "roleFromDb", cu.getRole(),
+                "authorities", auths
+        ));
+    }
+
 
 }

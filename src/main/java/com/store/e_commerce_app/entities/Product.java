@@ -44,6 +44,19 @@ public class Product {
     @Column(name = "is_sponsored", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean isSponsored = false;
 
+    // owner admin who created/owns this product
+    @ManyToOne
+    @JoinColumn(name = "owner_id")
+    private UserDlts owner;
+
+    public UserDlts getOwner() {
+        return owner;
+    }
+
+    public void setOwner(UserDlts owner) {
+        this.owner = owner;
+    }
+
     public Long getProductId() {
         return productId;
     }
@@ -143,7 +156,7 @@ public class Product {
     public Product() {
     }
 
-    public Product(Long productId, String productName, String productDescription, String brandDetails, String aboutProduct, String categoryName, Double productPrice, Integer discount, Double discountPrice, int stockQuantity, String productImageUrl, Boolean isSponsored) {
+    public Product(Long productId, String productName, String productDescription, String brandDetails, String aboutProduct, String categoryName, Double productPrice, Integer discount, Double discountPrice, int stockQuantity, String productImageUrl, Boolean isSponsored, UserDlts owner) {
         this.productId = productId;
         this.productName = productName;
         this.productDescription = productDescription;
@@ -156,5 +169,6 @@ public class Product {
         this.stockQuantity = stockQuantity;
         this.productImageUrl = productImageUrl;
         this.isSponsored = isSponsored;
+        this.owner = owner;
     }
 }

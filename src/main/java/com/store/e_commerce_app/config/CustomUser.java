@@ -4,7 +4,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -15,12 +14,6 @@ public class CustomUser implements UserDetails {
     public CustomUser(UserDlts user) {
         this.user = user;
     }
-
-//    @Override
-//    public Collection<? extends GrantedAuthority> getAuthorities() {
-//        SimpleGrantedAuthority simpleGrantedAuthority = new SimpleGrantedAuthority(user.getRole());
-//        return List.of(simpleGrantedAuthority);
-//    }
 
     // 🔥 ADD THESE GETTERS
     public Long getUserId() {
@@ -41,7 +34,13 @@ public class CustomUser implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(user.getRole()));
+        String role = user.getRole();
+        if (role == null) {
+            return List.of();
+        }
+        // ensure ROLE_ prefix so Spring's hasRole/hasAuthority checks work consistently
+        String authority = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+        return List.of(new SimpleGrantedAuthority(authority));
     }
 
     @Override

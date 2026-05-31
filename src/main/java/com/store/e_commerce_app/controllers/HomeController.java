@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@CrossOrigin(origins = "http://localhost:5174")
 @RestController
 //@RequestMapping("user")
 public class HomeController {
@@ -288,6 +289,22 @@ public class HomeController {
         List<Product> products = productService.searchProducts(request.getQuery());
         return ResponseEntity.ok(Map.of(
                 "status", "Success",
+                "products", products
+        ));
+    }
+
+    /**
+     * GET /discounts?minPercent=40
+     * Returns products whose discount >= minPercent (default 40)
+     */
+    @PostMapping("/discountsProducts")
+    public ResponseEntity<?> getDiscountedProductsPost(@RequestBody DiscountRequest request) {
+        int minPercent = (request.getMinPercent() == null || request.getMinPercent() < 0) ? 40 : request.getMinPercent();
+        List<Product> products = productService.findProductsByMinDiscount(minPercent);
+        return ResponseEntity.ok(Map.of(
+                "status", "Success",
+                "minPercent", minPercent,
+                "count", products.size(),
                 "products", products
         ));
     }

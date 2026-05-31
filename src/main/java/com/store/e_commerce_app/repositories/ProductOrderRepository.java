@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import com.store.e_commerce_app.dto.CategorySalesDTO;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -30,6 +31,20 @@ public interface ProductOrderRepository extends JpaRepository<ProductOrder, Long
     // pageable query
     Page<ProductOrder> findByUserDltsUserId(Long userId, Pageable pageable);
 
+    // New: find orders where the product's owner has given id
+    @Query("SELECT po FROM ProductOrder po WHERE po.product.owner.userId = :ownerId ORDER BY po.orderDate DESC")
+    List<ProductOrder> findByProductOwnerId(@Param("ownerId") Long ownerId);
+
+    @Query("SELECT po FROM ProductOrder po WHERE po.product.owner.userId = :ownerId")
+    Page<ProductOrder> findByProductOwnerId(@Param("ownerId") Long ownerId, Pageable pageable);
+
+    // New: recent orders for owner ascending
+    @Query("SELECT po FROM ProductOrder po WHERE po.product.owner.userId = :ownerId ORDER BY po.orderDate DESC")
+    List<ProductOrder> findByProductOwnerIdOrderByOrderDateDesc(@Param("ownerId") Long ownerId);
+
+    // New: recent orders for all owners ascending
+    @Query("SELECT po FROM ProductOrder po ORDER BY po.orderDate ASC")
+    List<ProductOrder> findAllByOrderByOrderDateAsc();
 
     @Query("""
     SELECT new com.store.e_commerce_app.dto.CategorySalesDTO(
@@ -58,6 +73,22 @@ public interface ProductOrderRepository extends JpaRepository<ProductOrder, Long
     ORDER BY SUM(po.quantity) DESC
     """)
     List<TopProductSalesDTO> getTopSellingProducts();
+
+    // New: top products scoped to owner
+    @Query("""
+    SELECT new com.store.e_commerce_app.dto.TopProductSalesDTO(
+        p.productId,
+        p.productName,
+        SUM(po.quantity),
+        SUM(po.quantity * po.price)
+    )
+    FROM ProductOrder po
+    JOIN po.product p
+    WHERE po.status = 'DELIVERED' AND p.owner.userId = :ownerId
+    GROUP BY p.productId, p.productName
+    ORDER BY SUM(po.quantity) DESC
+    """)
+    List<TopProductSalesDTO> getTopSellingProductsByOwner(@Param("ownerId") Long ownerId);
 
     @Query("""
     SELECT new com.store.e_commerce_app.dto.TotalRevenueDTO(

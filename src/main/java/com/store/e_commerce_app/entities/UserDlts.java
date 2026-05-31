@@ -3,6 +3,7 @@ package com.store.e_commerce_app.entities;
 import jakarta.persistence.*;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "UserDetails")
@@ -39,6 +40,14 @@ public class UserDlts {
     @JoinColumn(name = "user_id", referencedColumnName = "userId")
     @JsonManagedReference
     private List<Address> addresses;
+
+    // Whether this admin/seller is approved by a SUPER_ADMIN to be able to login as admin
+    @Column(name = "approved_by_super_admin", nullable = false, columnDefinition = "boolean default false")
+    private Boolean approvedBySuperAdmin = false;
+
+    // Timestamp of last successful login (set only upon successful authentication)
+    @Column(name = "last_login_time")
+    private LocalDateTime lastLoginTime;
 
     // Getters & Setters
 
@@ -112,6 +121,22 @@ public class UserDlts {
 
     public void setAddresses(List<Address> addresses) {
         this.addresses = addresses;
+    }
+
+    public Boolean getApprovedBySuperAdmin() {
+        return approvedBySuperAdmin;
+    }
+
+    public void setApprovedBySuperAdmin(Boolean approvedBySuperAdmin) {
+        this.approvedBySuperAdmin = approvedBySuperAdmin;
+    }
+
+    public LocalDateTime getLastLoginTime() {
+        return lastLoginTime;
+    }
+
+    public void setLastLoginTime(LocalDateTime lastLoginTime) {
+        this.lastLoginTime = lastLoginTime;
     }
 
     public UserDlts(){

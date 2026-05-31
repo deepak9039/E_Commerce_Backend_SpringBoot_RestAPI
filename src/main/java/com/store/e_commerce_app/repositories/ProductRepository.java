@@ -21,5 +21,18 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     List<Product> findByIsSponsoredTrue();
 
+    // find products having discount greater than or equal to a percentage
+    List<Product> findByDiscountGreaterThanEqual(Integer discount);
 
+    // Products by owner id
+    List<Product> findByOwner_UserId(Long ownerId);
+
+    // Products NOT owned by an owner (useful if you need)
+    List<Product> findByOwner_UserIdNot(Long ownerId);
+
+    // Paged products by owner
+    Page<Product> findByOwner_UserId(Long ownerId, Pageable pageable);
+
+    // New: count products for owner
+    long countByOwner_UserId(Long ownerId);
 }

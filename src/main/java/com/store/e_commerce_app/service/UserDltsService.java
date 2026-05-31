@@ -8,6 +8,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +25,8 @@ public class UserDltsService {
         userDlts.setRole("ROLE_USER");
         String encodePassword = passwordEncoder.encode(userDlts.getPassword());
         userDlts.setPassword(encodePassword);
+        // default: not approved to be admin/seller
+        userDlts.setApprovedBySuperAdmin(false);
         return userDltsRepository.save(userDlts);
 
     }
@@ -85,4 +88,41 @@ public class UserDltsService {
         return userDltsRepository.save(existingUser);
     }
 
+    // DEV helper: create an admin user (role ROLE_ADMIN) - use only in dev/testing
+    public UserDlts createAdmin(UserDlts admin) {
+        if (admin == null || admin.getEmail() == null || admin.getPassword() == null) {
+            throw new IllegalArgumentException("email and password are required");
+        }
+        UserDlts exists = userDltsRepository.findByEmail(admin.getEmail());
+        if (exists != null) {
+            // update role if needed
+//            exists.setRole("ROLE_ADMIN");
+//            System.out.println("email already exists, updating role to ROLE_ADMIN");
+//            return userDltsRepository.save(exists);
+            throw new RuntimeException("Email already exists");
+        }
+        admin.setRole("ROLE_ADMIN");
+        String encoded = passwordEncoder.encode(admin.getPassword());
+        admin.setPassword(encoded);
+        // default approval false for admin created via this helper
+        admin.setApprovedBySuperAdmin(false);
+        return userDltsRepository.save(admin);
+    }
+
+    // Update last login time for a user
+    public void updateLastLoginTime(Long userId) {
+        UserDlts u = userDltsRepository.findByUserId(userId);
+        if (u != null) {
+            u.setLastLoginTime(LocalDateTime.now());
+            userDltsRepository.save(u);
+        }
+    }
+
+    // Set approval flag (to be called by SUPER_ADMIN) - returns updated user
+    public UserDlts setApprovedBySuperAdmin(Long userId, boolean approved) {
+        UserDlts u = userDltsRepository.findByUserId(userId);
+        if (u == null) throw new RuntimeException("User not found");
+        u.setApprovedBySuperAdmin(approved);
+        return userDltsRepository.save(u);
+    }
 }

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@CrossOrigin(origins = "http://localhost:5174")
 @RestController
 @RequestMapping("/reviews")
 public class ReviewController {
