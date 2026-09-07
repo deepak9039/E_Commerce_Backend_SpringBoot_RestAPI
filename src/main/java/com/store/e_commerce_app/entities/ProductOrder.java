@@ -1,5 +1,6 @@
 package com.store.e_commerce_app.entities;
 
+import com.store.e_commerce_app.util.OrderPaymentStatus;
 import jakarta.persistence.*;
 
 import java.util.Date;
@@ -29,6 +30,9 @@ public class ProductOrder {
     private String status;
 
     private String paymentMethod;
+
+    @Enumerated(EnumType.STRING)
+    private OrderPaymentStatus orderPaymentStatus;
 
     @OneToOne(cascade = CascadeType.ALL)
     private OrderAddress orderAddress;
@@ -96,6 +100,14 @@ public class ProductOrder {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public OrderPaymentStatus getOrderPaymentStatus() {
+        return orderPaymentStatus;
+    }
+
+    public void setOrderPaymentStatus(OrderPaymentStatus orderPaymentStatus) {
+        this.orderPaymentStatus = orderPaymentStatus;
     }
 
     public String getPaymentMethod() {

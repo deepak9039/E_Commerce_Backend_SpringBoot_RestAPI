@@ -11,6 +11,7 @@ import com.store.e_commerce_app.exception.InvalidOrderStatusException;
 import com.store.e_commerce_app.repositories.CartRepositort;
 import com.store.e_commerce_app.repositories.ProductOrderRepository;
 import com.store.e_commerce_app.repositories.ProductRepository;
+import com.store.e_commerce_app.util.OrderPaymentStatus;
 import com.store.e_commerce_app.util.OrderStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -37,7 +38,7 @@ public class ProductOrderService {
     private ProductRepository productRepository; // used to update product stock when order delivered
 
     // return list of saved orders so controller can include them in response
-    public List<ProductOrder> saveOrder(OrderRequest orderRequest) {
+    public List<ProductOrder> placeOrder(OrderRequest orderRequest) {
 
         List<Cart> cart = cartRepositort.findByUserDltsUserId(orderRequest.getUserId());
         if(cart == null || cart.isEmpty()) {
@@ -64,15 +65,16 @@ public class ProductOrderService {
                 price = cart1.getProduct().getDiscountPrice();
             }
             // Add delivery charge if price < 1000
-            if (price < 1000) {
-                price = price + 50;
-            }
+//            if (price < 1000) {
+//                price = price + 50;
+//            }
             productOrder.setPrice(price);
             productOrder.setQuantity(cart1.getQuantity());
             productOrder.setUserDlts(cart1.getUserDlts());
 
             productOrder.setStatus(OrderStatus.IN_PROGRESS.name());
             productOrder.setPaymentMethod(orderRequest.getPaymentMethod());
+            productOrder.setOrderPaymentStatus(OrderPaymentStatus.PAYMENT_INITIATED);
 
             //Order Addess
             OrderAddress address = new OrderAddress();
@@ -141,26 +143,31 @@ public class ProductOrderService {
 
         // If transitioning to DELIVERED from a non-DELIVERED status, decrement stock
         if (!OrderStatus.DELIVERED.name().equals(previousStatus) && OrderStatus.DELIVERED.name().equals(status)) {
-            // determine quantity to deduct: prefer existing order quantity, fallback to update payload
-            Integer orderedQty = productOrder.getQuantity();
-            if (orderedQty == null) orderedQty = quntity != null ? quntity : 0;
-
-            if (orderedQty > 0) {
-                if (productOrder.getProduct() == null) {
-                    throw new RuntimeException("Associated product not found for order: " + orderId);
-                }
-                int currentStock = productOrder.getProduct().getStockQuantity();
-                if (currentStock < orderedQty) {
-                    throw new RuntimeException("Insufficient stock to mark order as DELIVERED. Current stock: " + currentStock + ", ordered: " + orderedQty);
-                }
-                productOrder.getProduct().setStockQuantity(currentStock - orderedQty);
-                // Persist product change
-                productRepository.save(productOrder.getProduct());
-            }
+            reduceStockForDelivery(productOrder, quntity, orderId);
         }
 
         productOrder.setStatus(status);
         return productOrderRepository.save(productOrder);
+    }
+
+    // Reusable helper to decrement product stock when an order is marked DELIVERED
+    private void reduceStockForDelivery(ProductOrder productOrder, Integer quntity, String orderId) {
+        // determine quantity to deduct: prefer existing order quantity, fallback to update payload
+        Integer orderedQty = productOrder.getQuantity();
+        if (orderedQty == null) orderedQty = quntity != null ? quntity : 0;
+
+        if (orderedQty > 0) {
+            if (productOrder.getProduct() == null) {
+                throw new RuntimeException("Associated product not found for order: " + orderId);
+            }
+            int currentStock = productOrder.getProduct().getStockQuantity();
+            if (currentStock < orderedQty) {
+                throw new RuntimeException("Insufficient stock to mark order as DELIVERED. Current stock: " + currentStock + ", ordered: " + orderedQty);
+            }
+            productOrder.getProduct().setStockQuantity(currentStock - orderedQty);
+            // Persist product change
+            productRepository.save(productOrder.getProduct());
+        }
     }
 
     // helper to return enum names for controller or other callers

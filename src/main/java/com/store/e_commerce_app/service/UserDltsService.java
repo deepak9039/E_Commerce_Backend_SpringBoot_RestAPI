@@ -125,4 +125,11 @@ public class UserDltsService {
         u.setApprovedBySuperAdmin(approved);
         return userDltsRepository.save(u);
     }
+
+    // Get All Sellers
+    public List<UserDlts> getAllSellers(String role) {
+        return userDltsRepository.findByRole(role);
+    }
+
+
 }

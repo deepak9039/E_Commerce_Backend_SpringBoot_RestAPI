@@ -14,8 +14,16 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId;
-    private String orderId; // set by order flow after payment if needed
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserDlts user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_order_id", nullable = false)
+    private ProductOrder order; // set by order flow after payment if needed
+
+    @Column(name = "order_id")
+    private String orderId;
 
     private Double amount;
     private String currency;
@@ -44,10 +52,23 @@ public class Payment {
     // ... generate getters and setters (omitted for brevity)
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
-    public String getOrderId() { return orderId; }
-    public void setOrderId(String orderId) { this.orderId = orderId; }
+    public UserDlts getUser() { return user; }
+    public void setUser(UserDlts user) {
+    this.user = user;
+    }
+    public ProductOrder getOrder() { return order; }
+    public void setOrder(ProductOrder order) {
+        this.order = order;
+    }
+
+    public String getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
+    }
+
     public Double getAmount() { return amount; }
     public void setAmount(Double amount) { this.amount = amount; }
     public String getCurrency() { return currency; }

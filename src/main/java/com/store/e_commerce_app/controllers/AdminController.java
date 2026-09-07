@@ -631,5 +631,19 @@ public class AdminController {
         ));
     }
 
+    @PostMapping("/admin/getAllSellers")
+    public ResponseEntity<?> getAllSellers() {
+        String role = "ROLE_ADMIN";
+        List<UserDlts> sellers = userDltsService.getAllSellers(role);
+        return ResponseEntity.ok(Map.of("message","Success","sellers", sellers));
+    }
+
+    @PostMapping("/admin/getAllUsers")
+    public ResponseEntity<?> getAllUsers(){
+        String role = "ROLE_USER";
+        List<UserDlts> users = userDltsService.getAllSellers(role);
+        return ResponseEntity.ok(Map.of("message","Success","users", users));
+    }
+
 
 }

@@ -165,10 +165,19 @@ public class HomeController {
             // set totals
             cart.setTotalPrice(totalPrice);
             totalOrderPrice = totalOrderPrice + totalPrice;
-            cart.setTotalOrderPrice(totalOrderPrice);
+            // cart.setTotalOrderPrice(totalOrderPrice);
             updatedCart.add(cart);
         };
+        // Add delivery charge ONCE for the complete order
+        if (totalOrderPrice < 1000) {
+            totalOrderPrice = totalOrderPrice + 50;
+        }
 
+        // Set overall values after calculating all products
+        for (Cart cart : updatedCart) {
+            cart.setTotalOrderPrice(totalOrderPrice);
+            cart.setTotalOrderDiscount(totalOrderDiscount);
+        }
         return ResponseEntity.ok(updatedCart);
     }
 
@@ -208,7 +217,7 @@ public class HomeController {
 
     @PostMapping("saveOrder")
     public ResponseEntity<?> saveOrder(@RequestBody OrderRequest request, HttpSession session){
-        List<ProductOrder> savedOrders = productOrderService.saveOrder(request);
+        List<ProductOrder> savedOrders = productOrderService.placeOrder(request);
         if (savedOrders == null || savedOrders.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of(
                     "status", "Failure",
