@@ -1,6 +1,7 @@
 package com.store.e_commerce_app.service;
 
 import com.store.e_commerce_app.dto.PaymentRequest;
+import com.store.e_commerce_app.dto.UserPaymentDetails;
 import com.store.e_commerce_app.entities.Payment;
 import com.store.e_commerce_app.entities.ProductOrder;
 import com.store.e_commerce_app.entities.UserDlts;
@@ -76,6 +77,28 @@ public class PaymentService {
         productOrderRepository.save(order);
 
         return saved;
+    }
+
+    public ProductOrder getOrderDetails(UserPaymentDetails request) {
+        Long userId = request.getUserId();
+        String orderId = request.getOrderId();
+
+        ProductOrder order = productOrderRepository.findByUserDltsUserIdAndOrderId(userId, orderId);
+        if(order == null) {
+            throw new RuntimeException("Order not found for the given User ID and Order ID");
+        }
+        return order;
+    }
+
+    public Payment getPaymentDetails(UserPaymentDetails request) {
+        Long userId = request.getUserId();
+        String orderId = request.getOrderId();
+
+        Payment payment = paymentRepository.findByUserUserIdAndOrderId(userId, orderId);
+        if(payment == null) {
+            throw new RuntimeException("Payment not found for the given User ID and Order ID");
+        }
+        return payment;
     }
 
 }

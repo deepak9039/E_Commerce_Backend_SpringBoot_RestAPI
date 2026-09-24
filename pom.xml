@@ -45,6 +45,12 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
 
+        <!-- Jackson Hibernate module to handle lazy proxies (ByteBuddyInterceptor) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-hibernate6</artifactId>
+        </dependency>
+
         <!-- PDF generation (Apache PDFBox) -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>

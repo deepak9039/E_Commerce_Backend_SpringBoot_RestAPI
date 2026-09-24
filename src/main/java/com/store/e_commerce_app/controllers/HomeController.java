@@ -178,7 +178,12 @@ public class HomeController {
             cart.setTotalOrderPrice(totalOrderPrice);
             cart.setTotalOrderDiscount(totalOrderDiscount);
         }
-        return ResponseEntity.ok(updatedCart);
+        return ResponseEntity.ok(Map.of(
+                "status", "Success",
+                "totalCartPrice", totalOrderPrice,
+                "totalCartDiscount", totalOrderDiscount,
+                "cartItems", updatedCart
+        ));
     }
 
     @PostMapping("cartCount")
@@ -294,11 +299,26 @@ public class HomeController {
     }
 
     @PostMapping("searchProducts")
-    public ResponseEntity<?> searchProducts(@RequestBody SearchProductsRequest request, HttpSession session){
-        List<Product> products = productService.searchProducts(request.getQuery());
+    public ResponseEntity<?> searchProducts(@RequestBody SearchProductsRequest request, HttpSession session) {
+        String query = request.getNormalizedQuery();
+        if (query.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "Failed",
+                    "message", "Query cannot be empty"
+            ));
+        }
+
+        int page = (request.getPage() == null || request.getPage() < 0) ? 0 : request.getPage();
+        int pageSize = (request.getPageSize() == null || request.getPageSize() < 1) ? 10 : request.getPageSize();
+
+        Page<Product> products = productService.searchProducts(query, page, pageSize);
         return ResponseEntity.ok(Map.of(
                 "status", "Success",
-                "products", products
+                "pageSize", pageSize,
+                "products", products.getContent(),
+                "currentPage", products.getNumber(),
+                "totalPages", products.getTotalPages(),
+                "totalItems", products.getTotalElements()
         ));
     }
 

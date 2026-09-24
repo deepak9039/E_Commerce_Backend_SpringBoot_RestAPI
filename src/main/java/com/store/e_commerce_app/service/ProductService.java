@@ -96,8 +96,9 @@ public class ProductService {
         return productRepository.findAll(pageable);
     }
 
-    public List<Product> searchProducts(String query) {
-        return productRepository.findByProductNameContainingIgnoreCaseOrCategoryNameContainingIgnoreCase(query, query);
+    public Page<Product> searchProducts(String query, int pageNumber, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize); // Adjust page number and size as needed
+        return productRepository.findByProductNameContainingIgnoreCaseOrCategoryNameContainingIgnoreCase(query, query, pageable);
     }
 
     public List<TopProductSalesDTO> getTopSellingProducts() {

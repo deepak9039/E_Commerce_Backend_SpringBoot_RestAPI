@@ -41,6 +41,48 @@ public class Product {
     @Column(name = "productImageUrl")
     private String productImageUrl;
 
+    @Column(name = "variant_name")
+    private String variantName;
+
+    @Column(name = "color")
+    private String color;
+
+    @Column(name = "size")
+    private String size;
+
+    @Column(name = "material")
+    private String material;
+
+    @Column(name = "style")
+    private String style;
+
+    @Column(name = "weight")
+    private String weight;
+
+    @Column(name = "dimensions")
+    private String dimensions;
+
+    @Column(name = "country_of_origin")
+    private String countryOfOrigin;
+
+    @Column(name = "warranty")
+    private String warranty;
+
+    @Column(name = "manufacturer")
+    private String manufacturer;
+
+    @Column(name = "fabrics")
+    private String fabrics;
+
+    @Column(name = "occasions")
+    private String occasions;
+
+    @Column(name = "size_and_fit")
+    private String sizeAndFit;
+
+    @Column(name = "material_and_care")
+    private String materialAndCare;
+
     @Column(name = "is_sponsored", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean isSponsored = false;
 
@@ -145,6 +187,118 @@ public class Product {
         this.productImageUrl = productImageUrl;
     }
 
+    public String getVariantName() {
+        return variantName;
+    }
+
+    public void setVariantName(String variantName) {
+        this.variantName = variantName;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
+    }
+
+    public String getSize() {
+        return size;
+    }
+
+    public void setSize(String size) {
+        this.size = size;
+    }
+
+    public String getMaterial() {
+        return material;
+    }
+
+    public void setMaterial(String material) {
+        this.material = material;
+    }
+
+    public String getStyle() {
+        return style;
+    }
+
+    public void setStyle(String style) {
+        this.style = style;
+    }
+
+    public String getWeight() {
+        return weight;
+    }
+
+    public void setWeight(String weight) {
+        this.weight = weight;
+    }
+
+    public String getDimensions() {
+        return dimensions;
+    }
+
+    public void setDimensions(String dimensions) {
+        this.dimensions = dimensions;
+    }
+
+    public String getCountryOfOrigin() {
+        return countryOfOrigin;
+    }
+
+    public void setCountryOfOrigin(String countryOfOrigin) {
+        this.countryOfOrigin = countryOfOrigin;
+    }
+
+    public String getWarranty() {
+        return warranty;
+    }
+
+    public void setWarranty(String warranty) {
+        this.warranty = warranty;
+    }
+
+    public String getManufacturer() {
+        return manufacturer;
+    }
+
+    public void setManufacturer(String manufacturer) {
+        this.manufacturer = manufacturer;
+    }
+
+    public String getFabrics() {
+        return fabrics;
+    }
+
+    public void setFabrics(String fabrics) {
+        this.fabrics = fabrics;
+    }
+
+    public String getOccasions() {
+        return occasions;
+    }
+
+    public void setOccasions(String occasions) {
+        this.occasions = occasions;
+    }
+
+    public String getSizeAndFit() {
+        return sizeAndFit;
+    }
+
+    public void setSizeAndFit(String sizeAndFit) {
+        this.sizeAndFit = sizeAndFit;
+    }
+
+    public String getMaterialAndCare() {
+        return materialAndCare;
+    }
+
+    public void setMaterialAndCare(String materialAndCare) {
+        this.materialAndCare = materialAndCare;
+    }
+
     public Boolean getIsSponsored() {
         return isSponsored;
     }
@@ -156,7 +310,7 @@ public class Product {
     public Product() {
     }
 
-    public Product(Long productId, String productName, String productDescription, String brandDetails, String aboutProduct, String categoryName, Double productPrice, Integer discount, Double discountPrice, int stockQuantity, String productImageUrl, Boolean isSponsored, UserDlts owner) {
+    public Product(Long productId, String productName, String productDescription, String brandDetails, String aboutProduct, String categoryName, Double productPrice, Integer discount, Double discountPrice, int stockQuantity, String productImageUrl, String variantName, String color, String size, String material, String style, String weight, String dimensions, String countryOfOrigin, String warranty, String manufacturer, String fabrics, String occasions, String sizeAndFit, String materialAndCare, Boolean isSponsored, UserDlts owner) {
         this.productId = productId;
         this.productName = productName;
         this.productDescription = productDescription;
@@ -168,6 +322,20 @@ public class Product {
         this.discountPrice = discountPrice;
         this.stockQuantity = stockQuantity;
         this.productImageUrl = productImageUrl;
+        this.variantName = variantName;
+        this.color = color;
+        this.size = size;
+        this.material = material;
+        this.style = style;
+        this.weight = weight;
+        this.dimensions = dimensions;
+        this.countryOfOrigin = countryOfOrigin;
+        this.warranty = warranty;
+        this.manufacturer = manufacturer;
+        this.fabrics = fabrics;
+        this.occasions = occasions;
+        this.sizeAndFit = sizeAndFit;
+        this.materialAndCare = materialAndCare;
         this.isSponsored = isSponsored;
         this.owner = owner;
     }
